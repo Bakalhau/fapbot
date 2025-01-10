@@ -1,0 +1,28 @@
+{
+    "Fap Shield": {
+      "emoji": "<:1_hour_shield:1325569722498158724>",
+      "cost": 30,
+      "description": "Fique livre para bater quantas punhetas quiser por 1 hora!"
+    },
+    "Ultra Fap Shield": {
+      "emoji": "<:2_hour_shield:1325569788357120062>",
+      "cost": 55,
+      "description": "Fique livre para bater quantas punhetas quiser por 2 horas!"
+    },
+    "Redemption": {
+      "emoji": "<:redemption:1325572543213600778>",
+      "cost": 30,
+      "description": "Receba redenção e retire 1 punheta do seu Score."
+    },
+    "Supreme Redemption": {
+      "emoji": "<:supreme_redemption:1325572624864116837>",
+      "cost": 65,
+      "description": "Receba redenção e retire 5 punhetas do seu Score."
+    },
+    "Faproll": {
+      "emoji": "🎰",
+      "cost": 20,
+      "description": "Tente a sorte e talvez ganhe algum item útil!"
+    }
+  }
+  

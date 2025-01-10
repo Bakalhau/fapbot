@@ -15,6 +15,14 @@ class FapBot(commands.Bot):
         intents.members = True
         
         super().__init__(command_prefix='&', intents=intents)
+    
+    async def setup_hook(self):
+        # Load all cogs
+        for filename in os.listdir('./cogs'):
+            if filename.endswith('.py') and not filename.startswith('__'):
+                await self.load_extension(f'cogs.{filename[:-3]}')
+        
+        await self.load_extension('utils.file_manager')
 
     async def on_ready(self):
         print(f'Bot connected as {self.user}')

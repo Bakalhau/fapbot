@@ -3,3 +3,4 @@ env
 __pycache__
 items.json
 scoreboard.json
+config.json

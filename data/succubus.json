@@ -1,0 +1,32 @@
+{
+    "available_succubus": {
+        "lilith": {
+            "name": "Lilith",
+            "image": "https://i.imgur.com/AHMJsnZ.png",
+            "ability": "score_multiplier",
+            "ability_description": "Multiplies score gains by 1.5",
+            "burden": "coin_reduction",
+            "burden_description": "Reduces coin gains by 30%",
+            "rarity": "legendary"
+        },
+        "asmodeus": {
+            "name": "Asmodeus",
+            "image": "https://example.com/asmodeus.jpg",
+            "ability": "shield_extension",
+            "ability_description": "Extends shield duration by 30 minutes",
+            "burden": "double_points",
+            "burden_description": "Chance of receiving double points when you don't want to",
+            "rarity": "epic"
+        },
+        "meru": {
+            "name": "Meru",
+            "image": "https://example.com/meru.jpg",
+            "ability": "coin_boost",
+            "ability_description": "30% chance of getting extra fapcoins",
+            "burden": "shield_reduction",
+            "burden_description": "Reduces all shield durations by 15%",
+            "rarity": "rare"
+        }
+    },
+    "user_succubus": {}
+}

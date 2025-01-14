@@ -1,12 +1,12 @@
 {
     "available_succubus": {
         "lilith": {
-            "name": "Lilith",
-            "image": "https://i.imgur.com/AHMJsnZ.png",
+            "name": "Astarielle",
+            "image": "https://cdn.imgchest.com/files/yq9c33rokd4.png",
             "ability": "score_multiplier",
-            "ability_description": "Multiplies score gains by 1.5",
+            "ability_description": "Você recebe o **daily** automaticamente!",
             "burden": "coin_reduction",
-            "burden_description": "Reduces coin gains by 30%",
+            "burden_description": "Você tem 30% de chance de não receber o **daily**",
             "rarity": "legendary"
         },
         "asmodeus": {
@@ -28,5 +28,11 @@
             "rarity": "rare"
         }
     },
-    "user_succubus": {}
+    "user_succubus": {
+        "303274047041699842": {
+            "asmodeus": {
+                "acquired_date": "2025-01-13T09:34:09.687000+00:00"
+            }
+        }
+    }
 }

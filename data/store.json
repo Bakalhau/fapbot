@@ -23,6 +23,12 @@
       "emoji": "🎰",
       "cost": 20,
       "description": "Tente a sorte e talvez ganhe algum item útil!"
-    }
+    },
+    "Ritual": {
+      "emoji": "<:ritual:1328294890165108778>",
+      "cost": 30,
+      "description": "Faça um ritual e sumune uma succubus, talvez ela possa te ajudar com algo 😈"
+  }
+  
   }
   

@@ -15,25 +15,24 @@ class PurchaseButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         file_manager = self.bot.get_cog('FileManager')
-        user = interaction.user.name
+        user_id = str(interaction.user.id)
+        username = interaction.user.name
         item = self.item
         cost = file_manager.store_items[item]["cost"]
 
-        if file_manager.fapcoins.get(user, 0) >= cost:
-            file_manager.fapcoins[user] -= cost
-            if user not in file_manager.user_items:
-                file_manager.user_items[user] = {}
-            if item not in file_manager.user_items[user]:
-                file_manager.user_items[user][item] = 0
-            file_manager.user_items[user][item] += 1
-            file_manager.save_items()
+        # Ensure user exists in database
+        file_manager.db.create_or_update_user(user_id, username)
+        
+        if file_manager.db.get_fapcoins(user_id) >= cost:
+            file_manager.db.update_fapcoins(user_id, -cost)
+            file_manager.db.update_item_quantity(user_id, item, 1)
             await interaction.response.send_message(
-                f'{user} successfully bought {item} {file_manager.store_items[item]["emoji"]}!',
+                f'{username} successfully bought {item} {file_manager.store_items[item]["emoji"]}!',
                 ephemeral=True
             )
         else:
             await interaction.response.send_message(
-                f'{user}, you don\'t have enough Fapcoins to buy {item}.',
+                f'{username}, you don\'t have enough Fapcoins to buy {item}.',
                 ephemeral=True
             )
 
@@ -46,7 +45,6 @@ class StoreView(View):
 class Store(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.daily_usage = {}
 
     @commands.command()
     async def store(self, ctx):
@@ -62,27 +60,33 @@ class Store(commands.Cog):
 
     @commands.command()
     async def daily(self, ctx):
-        user = ctx.author.name
+        file_manager = self.bot.get_cog('FileManager')
+        user_id = str(ctx.author.id)
+        username = ctx.author.name
         now = datetime.now()
         
-        if user not in self.daily_usage or now - self.daily_usage[user] >= timedelta(hours=12):
-            file_manager = self.bot.get_cog('FileManager')
-            file_manager.fapcoins[user] = file_manager.fapcoins.get(user, 0) + 1
-            self.daily_usage[user] = now
-            file_manager.save_items()
-            await ctx.send(f'{user}, you received 1 Fapcoin! 💰 Total: {file_manager.fapcoins[user]} Fapcoins.')
+        # Ensure user exists in database
+        file_manager.db.create_or_update_user(user_id, username)
+        
+        last_daily = file_manager.db.get_last_daily(user_id)
+        if not last_daily or (now - last_daily) >= timedelta(hours=12):
+            file_manager.db.update_fapcoins(user_id, 1)
+            file_manager.db.update_daily_timestamp(user_id)
+            coins = file_manager.db.get_fapcoins(user_id)
+            await ctx.send(f'{username}, you received 1 Fapcoin! 💰 Total: {coins} Fapcoins.')
         else:
-            remaining_time = timedelta(hours=12) - (now - self.daily_usage[user])
+            remaining_time = timedelta(hours=12) - (now - last_daily)
             hours, remainder = divmod(remaining_time.seconds, 3600)
             minutes, _ = divmod(remainder, 60)
-            await ctx.send(f'{user}, you already got your daily Fapcoin! Try again in {hours}h {minutes}m.')
+            await ctx.send(f'{username}, you already got your daily Fapcoin! Try again in {hours}h {minutes}m.')
 
     @commands.command()
     async def fapcoin(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
-        user = ctx.author.name
-        coins = file_manager.fapcoins.get(user, 0)
-        await ctx.send(f'{user}, you have {coins} Fapcoins.')
+        user_id = str(ctx.author.id)
+        username = ctx.author.name
+        coins = file_manager.db.get_fapcoins(user_id)
+        await ctx.send(f'{username}, you have {coins} Fapcoins.')
 
 async def setup(bot):
     await bot.add_cog(Store(bot))

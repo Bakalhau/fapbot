@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from discord.ui import View, Button
-from datetime import datetime
 
 class ScoreboardButton(Button):
     def __init__(self, bot):
@@ -10,20 +9,27 @@ class ScoreboardButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         file_manager = self.bot.get_cog('FileManager')
-        user = interaction.user.name
+        user_id = str(interaction.user.id)
+        username = interaction.user.name
         
-        if user not in file_manager.scoreboard:
-            file_manager.scoreboard[user] = {"faps": 0, "score": 0}
-        file_manager.scoreboard[user]["faps"] += 1
+        # Create or update user if they don't exist
+        file_manager.db.create_or_update_user(user_id, username)
+        
+        # Get current user data
+        user_data = file_manager.db.get_user(user_id) or {'faps': 0, 'score': 0}
+        new_faps = user_data['faps'] + 1
         
         # Check if shield is active
         items_cog = self.bot.get_cog('Items')
-        if not items_cog.is_shield_active(user):
-            file_manager.scoreboard[user]["score"] += 1
+        new_score = user_data['score']
+        if not items_cog.is_shield_active(user_id):
+            new_score += 1
         
-        file_manager.save_scoreboard()
+        # Update user's score
+        file_manager.db.update_user_score(user_id, new_faps, new_score)
+        
         await interaction.response.edit_message(
-            embed=create_scoreboard_embed(file_manager.scoreboard),
+            embed=create_scoreboard_embed(file_manager.db.get_scoreboard()),
             view=ScoreboardView(self.bot)
         )
 
@@ -40,7 +46,7 @@ class Scoreboard(commands.Cog):
     async def scoreboard(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
         await ctx.send(
-            embed=create_scoreboard_embed(file_manager.scoreboard),
+            embed=create_scoreboard_embed(file_manager.db.get_scoreboard()),
             view=ScoreboardView(self.bot)
         )
 
@@ -51,21 +57,25 @@ class Scoreboard(commands.Cog):
             return
 
         file_manager = self.bot.get_cog('FileManager')
-        if name in file_manager.scoreboard:
-            file_manager.scoreboard[name]["score"] = max(0, file_manager.scoreboard[name]["score"] - amount)
-            file_manager.save_scoreboard()
+        user_data = file_manager.db.get_user(name)
+        if user_data:
+            new_score = max(0, user_data['score'] - amount)
+            file_manager.db.update_user_score(name, user_data['faps'], new_score)
             await ctx.send(f'Removed {amount} points from {name}.')
         else:
             await ctx.send(f'{name} is not on the scoreboard.')
 
-def create_scoreboard_embed(scoreboard):
+def create_scoreboard_embed(scoreboard_data):
     embed = discord.Embed(title='FAPOMETER 🍆', color=discord.Color.blue())
-    if not scoreboard:
+    if not scoreboard_data:
         embed.add_field(name="No faps yet", value="Click the emoji to start!", inline=False)
     else:
-        sorted_scores = sorted(scoreboard.items(), key=lambda x: (x[1]["score"], x[0]))
-        for player, stats in sorted_scores:
-            embed.add_field(name=player, value=f'Faps: {stats["faps"]} | Score: {stats["score"]}', inline=False)
+        for entry in scoreboard_data:
+            embed.add_field(
+                name=entry['username'],
+                value=f'Faps: {entry["faps"]} | Score: {entry["score"]}',
+                inline=False
+            )
     return embed
 
 async def setup(bot):

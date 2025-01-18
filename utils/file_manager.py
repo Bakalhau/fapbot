@@ -34,18 +34,7 @@ class FileManager(commands.Cog):
     def get_probabilities(self):
         return self.load_json(self.probabilities_file, {})
 
-    def migrate_data(self):
-        """Migrate data from JSON files to SQLite database"""
-        scoreboard_file = os.path.join(self.data_folder, 'scoreboard.json')
-        items_file = os.path.join(self.data_folder, 'items.json')
-        succubus_file = os.path.join(self.data_folder, 'succubus.json')
-        
-        if all(os.path.exists(f) for f in [scoreboard_file, items_file, succubus_file]):
-            self.db.migrate_from_json(scoreboard_file, items_file, succubus_file)
-            print("Data migration completed successfully!")
-
 async def setup(bot):
     cog = FileManager(bot)
     await bot.add_cog(cog)
     # Uncomment the following line to migrate data when setting up the bot
-    cog.migrate_data()

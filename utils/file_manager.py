@@ -1,6 +1,7 @@
 import json
 import os
 from discord.ext import commands
+from .database_manager import DatabaseManager
 
 class FileManager(commands.Cog):
     def __init__(self, bot):
@@ -8,19 +9,14 @@ class FileManager(commands.Cog):
         self.data_folder = 'data'
         self.ensure_data_folder_exists()
         
-        # File paths
-        self.scoreboard_file = os.path.join(self.data_folder, 'scoreboard.json')
-        self.items_file = os.path.join(self.data_folder, 'items.json')
+        # Initialize database
+        self.db = DatabaseManager(os.path.join(self.data_folder, 'fapbot.db'))
+        
+        # Load static data
         self.store_file = os.path.join(self.data_folder, 'store.json')
         self.probabilities_file = os.path.join(self.data_folder, 'probabilities.json')
-        
-        # Load data
-        self.scoreboard = self.load_json(self.scoreboard_file, {})
-        items_data = self.load_json(self.items_file, {"fapcoins": {}, "items": {}})
-        self.fapcoins = items_data.get("fapcoins", {})
-        self.user_items = items_data.get("items", {})
         self.store_items = self.load_json(self.store_file, {})
-        
+
     def ensure_data_folder_exists(self):
         if not os.path.exists(self.data_folder):
             os.makedirs(self.data_folder)
@@ -35,25 +31,21 @@ class FileManager(commands.Cog):
             print(f"Error loading {file_path}: {e}")
             return default_value
 
-    def save_json(self, file_path, data):
-        try:
-            with open(file_path, 'w') as f:
-                json.dump(data, f, indent=4)
-        except Exception as e:
-            print(f"Error saving {file_path}: {e}")
-
-    def save_scoreboard(self):
-        self.save_json(self.scoreboard_file, self.scoreboard)
-
-    def save_items(self):
-        items_data = {
-            "fapcoins": self.fapcoins,
-            "items": self.user_items
-        }
-        self.save_json(self.items_file, items_data)
-
     def get_probabilities(self):
         return self.load_json(self.probabilities_file, {})
 
+    def migrate_data(self):
+        """Migrate data from JSON files to SQLite database"""
+        scoreboard_file = os.path.join(self.data_folder, 'scoreboard.json')
+        items_file = os.path.join(self.data_folder, 'items.json')
+        succubus_file = os.path.join(self.data_folder, 'succubus.json')
+        
+        if all(os.path.exists(f) for f in [scoreboard_file, items_file, succubus_file]):
+            self.db.migrate_from_json(scoreboard_file, items_file, succubus_file)
+            print("Data migration completed successfully!")
+
 async def setup(bot):
-    await bot.add_cog(FileManager(bot))
+    cog = FileManager(bot)
+    await bot.add_cog(cog)
+    # Uncomment the following line to migrate data when setting up the bot
+    cog.migrate_data()

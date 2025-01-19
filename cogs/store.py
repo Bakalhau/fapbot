@@ -88,5 +88,34 @@ class Store(commands.Cog):
         coins = file_manager.db.get_fapcoins(user_id)
         await ctx.send(f'{username}, you have {coins} Fapcoins.')
 
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def addcoin(self, ctx, user: discord.Member, amount: int):
+        """Add Fapcoins to a user (Admin only)"""
+        if amount <= 0:
+            await ctx.send("The amount must be greater than 0!")
+            return
+            
+        file_manager = self.bot.get_cog('FileManager')
+        user_id = str(user.id)
+        
+        # Ensure user exists in database
+        file_manager.db.create_or_update_user(user_id, user.name)
+        
+        # Add Fapcoins
+        file_manager.db.update_fapcoins(user_id, amount)
+        
+        # Get updated balance
+        new_balance = file_manager.db.get_fapcoins(user_id)
+        
+        embed = discord.Embed(
+            title="💰 Fapcoins Added!",
+            description=f"Added {amount} Fapcoins to {user.mention}",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="New Balance", value=f"{new_balance} Fapcoins")
+        
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(Store(bot))

@@ -34,6 +34,7 @@ class Succubus(commands.Cog):
     @commands.command()
     async def succubusinfo(self, ctx, *, name: str):
         """Show detailed information about a specific succubus"""
+        prefix = self.bot.command_prefix
         file_manager = self.bot.get_cog('FileManager')
         succubus_list = file_manager.db.get_all_succubus()
         
@@ -70,7 +71,7 @@ class Succubus(commands.Cog):
         
         # Check if user has a Ritual item
         if not user_items.get("Ritual", 0) > 0:
-            await ctx.send(f"{user}, you don't have any Ritual items! Buy one from the store using `!store`")
+            await ctx.send(f"{user}, you don't have any Ritual items! Buy one from the store using `{prefix}store`")
             return
 
         # Use the Ritual item

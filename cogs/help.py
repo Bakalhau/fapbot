@@ -8,6 +8,7 @@ class HelpCog(commands.Cog):
     @commands.command(name='help')
     async def help_command(self, ctx):
         """Shows all available commands"""
+        prefix = self.bot.command_prefix
         embed = discord.Embed(
             title="🍆 FapBot Commands",
             description="Here's everything you can do!",
@@ -18,7 +19,7 @@ class HelpCog(commands.Cog):
         embed.add_field(
             name="📊 Scoreboard",
             value="```\n"
-                  "!scoreboard - View the current scoreboard\n"
+                  f"{prefix}scoreboard - View the current scoreboard\n"
                   "```",
             inline=False
         )
@@ -27,9 +28,9 @@ class HelpCog(commands.Cog):
         embed.add_field(
             name="💰 Store & Economy",
             value="```\n"
-                  "!store      - View the item store\n"
-                  "!daily      - Get your daily Fapcoin (every 12 hours)\n"
-                  "!fapcoin    - Check your Fapcoin balance\n"
+                  f"{prefix}store      - View the item store\n"
+                  f"{prefix}daily      - Get your daily Fapcoin (every 12 hours)\n"
+                  f"{prefix}fapcoin    - Check your Fapcoin balance\n"
                   "```",
             inline=False
         )
@@ -38,12 +39,12 @@ class HelpCog(commands.Cog):
         embed.add_field(
             name="🎒 Items",
             value="```\n"
-                  "!items             - View your inventory\n"
-                  "!faproll           - Use a Faproll to get random items\n"
-                  "!fapshield         - Activate 1-hour protection\n"
-                  "!ultrafapshield    - Activate 2-hour protection\n"
-                  "!redemption        - Remove 1 point from score\n"
-                  "!supremeredemption - Remove 5 points from score\n"
+                  f"{prefix}items             - View your inventory\n"
+                  f"{prefix}faproll           - Use a Faproll to get random items\n"
+                  f"{prefix}fapshield         - Activate 1-hour protection\n"
+                  f"{prefix}ultrafapshield    - Activate 2-hour protection\n"
+                  f"{prefix}redemption        - Remove 1 point from score\n"
+                  f"{prefix}supremeredemption - Remove 5 points from score\n"
                   "```",
             inline=False
         )
@@ -52,11 +53,11 @@ class HelpCog(commands.Cog):
         embed.add_field(
             name="😈 Succubus System",
             value="```\n"
-                  "!ritual        - Perform a ritual to summon a succubus\n"
-                  "!mysuccubus    - View your succubus collection\n"
-                  "!succubusinfo  - View info about a specific succubus\n"
-                  "!listsuccubus  - View all available succubus\n"
-                  "!activesuccubus - Show active effects from your succubus\n"
+                  f"{prefix}ritual        - Perform a ritual to summon a succubus\n"
+                  f"{prefix}mysuccubus    - View your succubus collection\n"
+                  f"{prefix}succubusinfo  - View info about a specific succubus\n"
+                  f"{prefix}listsuccubus  - View all available succubus\n"
+                  f"{prefix}activesuccubus - Show active effects from your succubus\n"
                   "```",
             inline=False
         )
@@ -66,8 +67,9 @@ class HelpCog(commands.Cog):
             embed.add_field(
                 name="⚡ Admin Commands",
                 value="```\n"
-                      "!remove <user> <amount> - Remove points from user\n"
-                      "!givesuccubus <user> <succubus> - Give succubus to user\n"
+                      f"{prefix}remove <user> <amount> - Remove points from user\n"
+                      f"{prefix}add <user> <amount> - Give fapcoins to user\n"
+                      f"{prefix}givesuccubus <user> <succubus> - Give succubus to user\n"
                       "```",
                 inline=False
             )

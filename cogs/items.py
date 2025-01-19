@@ -95,6 +95,7 @@ class Items(commands.Cog):
 
     @commands.command()
     async def faproll(self, ctx):
+        prefix = self.bot.command_prefix
         file_manager = self.bot.get_cog('FileManager')
         user_id = str(ctx.author.id)
         username = ctx.author.name
@@ -115,7 +116,7 @@ class Items(commands.Cog):
                 file_manager.db.update_item_quantity(user_id, result, 1)
                 await ctx.send(f'🎰 {username} won **{result}** {file_manager.store_items[result]["emoji"]}!')
         else:
-            await ctx.send(f'{username}, you don\'t have any Faproll. Buy one from the store using `!store`.')
+            await ctx.send(f'{username}, you don\'t have any Faproll. Buy one from the store using `{prefix}store`.')
 
 async def setup(bot):
     await bot.add_cog(Items(bot))

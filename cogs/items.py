@@ -105,8 +105,11 @@ class Items(commands.Cog):
             file_manager.db.update_item_quantity(user_id, "Faproll", -1)
 
             probabilities = file_manager.get_probabilities()
-            items_list = list(probabilities.keys())
-            weights = list(probabilities.values())
+            # Filtra apenas as probabilidades dos itens (excluindo ritual_probabilities)
+            item_probabilities = {k: v for k, v in probabilities.items() if k != 'ritual_probabilities'}
+            
+            items_list = list(item_probabilities.keys())
+            weights = list(item_probabilities.values())
             
             result = random.choices(items_list, weights=weights, k=1)[0]
 

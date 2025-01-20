@@ -68,7 +68,7 @@ class HelpCog(commands.Cog):
                 name="⚡ Admin Commands",
                 value="```\n"
                       f"{prefix}remove <user> <amount> - Remove points from user\n"
-                      f"{prefix}add <user> <amount> - Give fapcoins to user\n"
+                      f"{prefix}addcoin <user> <amount> - Give fapcoins to user\n"
                       f"{prefix}givesuccubus <user> <succubus> - Give succubus to user\n"
                       "```",
                 inline=False

@@ -36,24 +36,12 @@ class DatabaseManager:
                 UNIQUE(user_id, item_name)
             );
 
-            CREATE TABLE IF NOT EXISTS available_succubus (
-                succubus_id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                image_url TEXT,
-                ability TEXT,
-                ability_description TEXT,
-                burden TEXT,
-                burden_description TEXT,
-                rarity TEXT
-            );
-
             CREATE TABLE IF NOT EXISTS user_succubus (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT,
                 succubus_id TEXT,
                 acquired_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(user_id),
-                FOREIGN KEY (succubus_id) REFERENCES available_succubus(succubus_id),
                 UNIQUE(user_id, succubus_id)
             );
         """)
@@ -186,10 +174,9 @@ class DatabaseManager:
     def get_user_succubus(self, user_id: str) -> List[Dict[str, Any]]:
         conn, cur = self.get_connection()
         cur.execute("""
-            SELECT s.*, us.acquired_date
-            FROM available_succubus s
-            JOIN user_succubus us ON s.succubus_id = us.succubus_id
-            WHERE us.user_id = ?
+            SELECT succubus_id, acquired_date
+            FROM user_succubus
+            WHERE user_id = ?
         """, (user_id,))
         result = [dict(row) for row in cur.fetchall()]
         conn.close()

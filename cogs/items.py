@@ -45,7 +45,7 @@ class Items(commands.Cog):
             
             await ctx.send(f'{username}, you used a Redemption and removed 1 point from your Score.')
         else:
-            await ctx.send(f'{username}, you don\'t have any Redemption.')
+            await ctx.send(f'{username}, you don\'t have any Redemption. Buy one from the store using `{prefix}store')
 
     @commands.command()
     async def supremeredemption(self, ctx):
@@ -63,7 +63,7 @@ class Items(commands.Cog):
             
             await ctx.send(f'{username}, you used a Supreme Redemption and removed 5 points from your Score.')
         else:
-            await ctx.send(f'{username}, you don\'t have any Supreme Redemption.')
+            await ctx.send(f'{username}, you don\'t have any Supreme Redemption. Buy one from the store using `{prefix}store')
 
     @commands.command()
     async def fapshield(self, ctx):
@@ -77,7 +77,7 @@ class Items(commands.Cog):
             self.shield_active[user_id] = datetime.now() + timedelta(hours=1)
             await ctx.send(f'{username}, you activated the Fap Shield! For 1 hour, your points won\'t increase your score.')
         else:
-            await ctx.send(f'{username}, you don\'t have any Fap Shield.')
+            await ctx.send(f'{username}, you don\'t have any Fap Shield. Buy one from the store using `{prefix}store')
 
     @commands.command()
     async def ultrafapshield(self, ctx):
@@ -91,7 +91,7 @@ class Items(commands.Cog):
             self.shield_active[user_id] = datetime.now() + timedelta(hours=2)
             await ctx.send(f'{username}, you activated the Ultra Fap Shield! For 2 hours, your points won\'t increase your score.')
         else:
-            await ctx.send(f'{username}, you don\'t have any Ultra Fap Shield.')
+            await ctx.send(f'{username}, you don\'t have any Ultra Fap Shield. Buy one from the store using `{prefix}store')
 
     @commands.command()
     async def faproll(self, ctx):

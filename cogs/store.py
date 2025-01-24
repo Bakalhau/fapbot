@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Button
 from datetime import datetime, timedelta
+from succubus_mechanics.astarielle import Astarielle
 
 class PurchaseButton(Button):
     def __init__(self, item, item_info, bot):
@@ -49,13 +50,29 @@ class Store(commands.Cog):
     @commands.command()
     async def store(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
-        embed = discord.Embed(title="🏢 Item Store", color=discord.Color.gold())
+
+        # Define user-related variables
+        user_id = str(ctx.author.id)
+        username = ctx.author.name
+        file_manager.db.create_or_update_user(user_id, username)
+        embed = discord.Embed(title="🏪 Item Store", color=discord.Color.gold())
+
+        # Iterate over store items and add fields to the embed
         for item, info in file_manager.store_items.items():
+            price = info["cost"]  # Original price of the item
+
+            # Check if the user owns the succubus "Astarielle" and apply inflation if necessary
+            user_succubus = file_manager.db.get_user_succubus(user_id)  # Retrieve user succubus list
+            if any(succubus['succubus_id'] == 'astarielle' for succubus in user_succubus):
+                price = Astarielle.apply_price_inflation(price)  # Apply price inflation
+
+            # Add item details to the embed
             embed.add_field(
                 name=f'{info["emoji"]} {item}',
-                value=f'{info["description"]}\nCost: {info["cost"]} Fapcoins',
+                value=f'{info["description"]}\nCost: {price} Fapcoins',
                 inline=False
             )
+        # Send the store embed with interactive buttons
         await ctx.send(embed=embed, view=StoreView(file_manager.store_items, self.bot))
 
     @commands.command()
@@ -67,8 +84,12 @@ class Store(commands.Cog):
         
         # Ensure user exists in database
         file_manager.db.create_or_update_user(user_id, username)
-        
+
         last_daily = file_manager.db.get_last_daily(user_id)
+        user_succubus = file_manager.db.get_user_succubus(user_id)
+        if any(succubus['succubus_id'] == 'astarielle' for succubus in user_succubus):
+            if last_daily:
+                last_daily = Astarielle.apply_daily_reduction(last_daily)
         if not last_daily or (now - last_daily) >= timedelta(hours=12):
             file_manager.db.update_fapcoins(user_id, 1)
             file_manager.db.update_daily_timestamp(user_id)

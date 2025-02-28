@@ -1,31 +1,76 @@
 {
     "available_succubus": {
-        "lilith": {
+        "astarielle": {
             "name": "Astarielle",
             "image": "https://cdn.imgchest.com/files/yq9c33rokd4.png",
-            "ability": "score_multiplier",
-            "ability_description": "Você recebe o **daily** automaticamente!",
-            "burden": "coin_reduction",
-            "burden_description": "Você tem 30% de chance de não receber o **daily**",
-            "rarity": "legendary"
+            "ability": "daily_reduction",
+            "ability_description": "O tempo do **daily** é diminuído em 2 horas",
+            "burden": "price_inflation",
+            "burden_description": "Os preços da loja são aumentados em 20%",
+            "rarity": "common"
         },
-        "asmodeus": {
-            "name": "Asmodeus",
-            "image": "https://example.com/asmodeus.jpg",
-            "ability": "shield_extension",
-            "ability_description": "Extends shield duration by 30 minutes",
-            "burden": "double_points",
-            "burden_description": "Chance of receiving double points when you don't want to",
+        "eryndra": {
+            "name": "Eryndra",
+            "image": "https://cdn.imgchest.com/files/4apc56k6vg4.png",
+            "ability": "daily_warn",
+            "ability_description": "Você recebe um aviso quando o **daily** está disponível",
+            "burden": "false_alarm",
+            "burden_description": "A cada hora você tem 30% de receber um Alarme Falso",
+            "rarity": "common"
+        },
+        "ravienna": {
+            "name": "Ravienna",
+            "image": "https://cdn.imgchest.com/files/4gdcxdldmw4.png",
+            "ability": "item_boost",
+            "ability_description": "Todos os items são 50% mais eficazes",
+            "burden": "item_fail",
+            "burden_description": "Todos os items tem 20% de chance de não funcionar",
+            "rarity": "rare"
+        },
+        "selphira": {
+            "name": "Selphira",
+            "image": "https://cdn.imgchest.com/files/y8xcneweqw4.png",
+            "ability": "fair_exchange",
+            "ability_description": "Você pode usar 10 fapcoins para remover 1 score",
+            "burden": "weekly_fap",
+            "burden_description": "A cada 3 dias você recebe 1 score a mais",
             "rarity": "epic"
         },
-        "meru": {
-            "name": "Meru",
-            "image": "https://example.com/meru.jpg",
-            "ability": "coin_boost",
-            "ability_description": "30% chance of getting extra fapcoins",
-            "burden": "shield_reduction",
-            "burden_description": "Reduces all shield durations by 15%",
-            "rarity": "rare"
+        "mimi": {
+            "name": "Mimi",
+            "image": "https://cdn.imgchest.com/files/4z9cvene987.png",
+            "ability": "automatic_daily",
+            "ability_description": "Você recebe o **daily** automaticamente",
+            "burden": "mechanical_failure",
+            "burden_description": "Você tem 20% de chance de não receber o daily",
+            "rarity": "epic"
+        },
+        "trinerva": {
+            "name": "Trinerva",
+            "image": "https://cdn.imgchest.com/files/ye3c2rjrgo4.png",
+            "ability": "daily_luck",
+            "ability_description": "Você tem 20% de chance de receber **2** fapcoins no **daily**",
+            "burden": "daily_delay",
+            "burden_description": "O **daily** agora tem a duração de 16 horas",
+            "rarity": "epic"
+        },
+        "morvina": {
+            "name": "Morvina",
+            "image": "https://cdn.imgchest.com/files/45xcv6g68n7.png",
+            "ability": "loot_box",
+            "ability_description": "A cada hora você tem 10% de chance de aparecer uma **Loot Box**, e você tem **5** segundos para pegar",
+            "burden": "divine_punishment",
+            "burden_description": "Você perde 3 **Fapcoins** a cada punheta adicionada",
+            "rarity": "legendary"
+        },
+        "velvetha": {
+            "name": "Velvetha",
+            "image": "https://cdn.imgchest.com/files/7w6c2bgbqey.png",
+            "ability": "cheater_master",
+            "ability_description": "Quando você adicionar uma punheta, tem 15% de chance do score ir para outra pessoa",
+            "burden": "karma",
+            "burden_description": "Você tem 20% de chance de receber 3 pontos no score quando adicionar uma punheta",
+            "rarity": "legendary"
         }
     }
 }

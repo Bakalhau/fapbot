@@ -24,7 +24,9 @@ class DatabaseManager:
                 faps INTEGER DEFAULT 0,
                 score INTEGER DEFAULT 0,
                 fapcoins INTEGER DEFAULT 0,
-                last_daily TIMESTAMP
+                last_daily TIMESTAMP,
+                active_succubus TEXT,
+                last_succubus_activation TIMESTAMP
             );
 
             CREATE TABLE IF NOT EXISTS items (
@@ -209,6 +211,68 @@ class DatabaseManager:
         result = [dict(row) for row in cur.fetchall()]
         conn.close()
         return result
+        
+    # Active Succubus methods
+    def activate_succubus(self, user_id: str, succubus_id: str) -> bool:
+        """Ativa uma succubus para o usuário, retorna True se bem sucedido"""
+        conn, cur = self.get_connection()
+        
+        # Verifica se o usuário possui essa succubus
+        cur.execute("""
+            SELECT COUNT(*) as count FROM user_succubus 
+            WHERE user_id = ? AND succubus_id = ?
+        """, (user_id, succubus_id))
+        
+        result = cur.fetchone()
+        if not result or result['count'] == 0:
+            conn.close()
+            return False
+            
+        # Ativa a succubus e atualiza o timestamp
+        cur.execute("""
+            UPDATE users 
+            SET active_succubus = ?, 
+                last_succubus_activation = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+        """, (succubus_id, user_id))
+        
+        conn.commit()
+        conn.close()
+        return True
+        
+    def get_active_succubus(self, user_id: str) -> Optional[str]:
+        """Retorna o ID da succubus ativa do usuário"""
+        conn, cur = self.get_connection()
+        cur.execute("""
+            SELECT active_succubus, last_succubus_activation 
+            FROM users 
+            WHERE user_id = ?
+        """, (user_id,))
+        
+        result = cur.fetchone()
+        conn.close()
+        
+        if not result or not result['active_succubus']:
+            return None
+            
+        return result['active_succubus']
+        
+    def get_succubus_activation_time(self, user_id: str) -> Optional[datetime]:
+        """Retorna o timestamp da última ativação de succubus"""
+        conn, cur = self.get_connection()
+        cur.execute("""
+            SELECT last_succubus_activation 
+            FROM users 
+            WHERE user_id = ?
+        """, (user_id,))
+        
+        result = cur.fetchone()
+        conn.close()
+        
+        if not result or not result['last_succubus_activation']:
+            return None
+            
+        return datetime.fromisoformat(result['last_succubus_activation'])
 
     # Migration method
     def migrate_from_json(self, scoreboard_path: str, items_path: str, succubus_path: str):

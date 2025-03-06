@@ -3,6 +3,7 @@ from discord.ext import commands
 import random
 import json
 import os
+from datetime import datetime, timedelta
 
 class Succubus(commands.Cog):
     def __init__(self, bot):
@@ -171,6 +172,135 @@ class Succubus(commands.Cog):
             )
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.cooldown(1, 604800, commands.BucketType.user)  # 1-week cooldown (7 * 24 * 60 * 60 seconds)
+    async def activate(self, ctx, *, name: str):
+        """Activates a succubus that the user owns (cooldown: 1 week)"""
+        file_manager = self.bot.get_cog('FileManager')
+        user_id = str(ctx.author.id)
+        
+        # Check if the user has a succubus
+        user_succubus = file_manager.db.get_user_succubus(user_id)
+        if not user_succubus:
+            await ctx.send("You don't own any succubus yet!")
+            ctx.command.reset_cooldown(ctx)  # Reset cooldown if it fails
+            return
+        
+        # Find the succubus by name
+        succubus_id = None
+        for sid, sdata in self.get_all_succubus().items():
+            if sdata['name'].lower() == name.lower():
+                succubus_id = sid
+                succubus = sdata
+                break
+                
+        if not succubus_id:
+            await ctx.send(f"Succubus '{name}' not found!")
+            ctx.command.reset_cooldown(ctx)  # Reset cooldown if it fails
+            return
+            
+        # Check if the user owns this succubus
+        if not any(s['succubus_id'] == succubus_id for s in user_succubus):
+            await ctx.send(f"You do not own the succubus {name}!")
+            ctx.command.reset_cooldown(ctx)  # Reset cooldown if it fails
+            return
+            
+        # Check the timestamp of the last activation
+        last_activation = file_manager.db.get_succubus_activation_time(user_id)
+        if last_activation:
+            time_diff = datetime.now() - last_activation
+            if time_diff < timedelta(days=7):
+                days_left = 7 - time_diff.days
+                hours_left = 24 - time_diff.seconds // 3600
+                await ctx.send(f"You need to wait {days_left} more days and {hours_left} hours to activate another succubus!")
+                ctx.command.reset_cooldown(ctx)  # Reset cooldown if it fails
+                return
+                
+        # Activate the succubus
+        success = file_manager.db.activate_succubus(user_id, succubus_id)
+        if success:
+            embed = discord.Embed(
+                title="✨ Succubus Activated! ✨",
+                description=f"You activated {succubus['name']} ({succubus['rarity'].capitalize()})!",
+                color=discord.Color.purple()
+            )
+            
+            embed.add_field(name="✨ Ability", value=succubus['ability_description'], inline=False)
+            embed.add_field(name="💀 Burden", value=succubus['burden_description'], inline=False)
+            
+            if succubus['image']:
+                embed.set_image(url=succubus['image'])
+                
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("Error activating the succubus!")
+            ctx.command.reset_cooldown(ctx)  # Reset cooldown if it fails
+            
+    @commands.command()
+    async def activesuccubus(self, ctx):
+        """Shows the user's currently active succubus"""
+        file_manager = self.bot.get_cog('FileManager')
+        user_id = str(ctx.author.id)
+        
+        active_succubus_id = file_manager.db.get_active_succubus(user_id)
+        if not active_succubus_id:
+            await ctx.send("You don't have any active succubus at the moment!")
+            return
+            
+        # Get succubus information
+        succubus = self.get_succubus_by_id(active_succubus_id)
+        if not succubus:
+            await ctx.send("Error: Succubus not found in the database!")
+            return
+            
+        # Get activation timestamp
+        activation_time = file_manager.db.get_succubus_activation_time(user_id)
+        if activation_time:
+            time_diff = datetime.utcnow() - activation_time
+            days_active = time_diff.days
+            hours_active = time_diff.seconds // 3600
+            
+            # Calculate remaining time until the next activation
+            next_activation = activation_time + timedelta(days=7)
+            time_until = next_activation - datetime.now()
+            days_left = time_until.days
+            hours_left = time_until.seconds // 3600
+            
+            activation_info = f"Active for: {days_active} days and {hours_active} hours\n"
+            activation_info += f"Next activation available in: {days_left} days and {hours_left} hours"
+        else:
+            activation_info = "Activation details unavailable"
+            
+        embed = discord.Embed(
+            title="🌟 Your Active Succubus 🌟",
+            description=activation_info,
+            color=discord.Color.purple()
+        )
+        
+        embed.add_field(
+            name=f"{succubus['name']} ({succubus['rarity'].capitalize()})",
+            value=f"✨ Ability: {succubus['ability_description']}\n"
+                f"💀 Burden: {succubus['burden_description']}",
+            inline=False
+        )
+        
+        if succubus['image']:
+            embed.set_image(url=succubus['image'])
+            
+        await ctx.send(embed=embed)
+        
+    @activate.error
+    async def activate_error(self, ctx, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            # Convert seconds into days/hours
+            cooldown = error.retry_after
+            days = int(cooldown // (24 * 3600))
+            hours = int((cooldown % (24 * 3600)) // 3600)
+            
+            await ctx.send(f"You need to wait {days} days and {hours} hours to activate another succubus!")
+        else:
+            await ctx.send(f"Error: {error}")
 
 async def setup(bot):
     await bot.add_cog(Succubus(bot))

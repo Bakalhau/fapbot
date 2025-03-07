@@ -209,7 +209,7 @@ class Succubus(commands.Cog):
         # Check the timestamp of the last activation
         last_activation = file_manager.db.get_succubus_activation_time(user_id)
         if last_activation:
-            time_diff = datetime.now() - last_activation
+            time_diff = datetime.utcnow() - last_activation  # Use UTC for consistency
             if time_diff < timedelta(days=7):
                 days_left = 7 - time_diff.days
                 hours_left = 24 - time_diff.seconds // 3600
@@ -263,7 +263,7 @@ class Succubus(commands.Cog):
             
             # Calculate remaining time until the next activation
             next_activation = activation_time + timedelta(days=7)
-            time_until = next_activation - datetime.now()
+            time_until = next_activation - datetime.utcnow()  # Use UTC for consistency
             days_left = time_until.days
             hours_left = time_until.seconds // 3600
             

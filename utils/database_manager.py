@@ -133,12 +133,17 @@ class DatabaseManager:
         conn.close()
 
     def update_daily_timestamp(self, user_id: str):
+        """
+        Update the last_daily timestamp for a user.
+        Using current UTC time for consistency.
+        """
+        current_time = datetime.utcnow().isoformat()
         conn, cur = self.get_connection()
         cur.execute("""
             UPDATE users 
-            SET last_daily = CURRENT_TIMESTAMP
+            SET last_daily = ?
             WHERE user_id = ?
-        """, (user_id,))
+        """, (current_time, user_id))
         conn.commit()
         conn.close()
 
@@ -147,7 +152,10 @@ class DatabaseManager:
         cur.execute("SELECT last_daily FROM users WHERE user_id = ?", (user_id,))
         result = cur.fetchone()
         conn.close()
-        return datetime.fromisoformat(result['last_daily']) if result and result['last_daily'] else None
+        
+        last_daily = datetime.fromisoformat(result['last_daily']) if result and result['last_daily'] else None
+        
+        return last_daily
 
     # Succubus methods
     def add_available_succubus(self, succubus_data: Dict[str, Any]):
@@ -227,14 +235,17 @@ class DatabaseManager:
         if not result or result['count'] == 0:
             conn.close()
             return False
+        
+        # Usar UTC para consistência
+        current_time = datetime.utcnow().isoformat()
             
         # Ativa a succubus e atualiza o timestamp
         cur.execute("""
             UPDATE users 
             SET active_succubus = ?, 
-                last_succubus_activation = CURRENT_TIMESTAMP
+                last_succubus_activation = ?
             WHERE user_id = ?
-        """, (succubus_id, user_id))
+        """, (succubus_id, current_time, user_id))
         
         conn.commit()
         conn.close()
@@ -271,8 +282,11 @@ class DatabaseManager:
         
         if not result or not result['last_succubus_activation']:
             return None
+        
+        # Parse the ISO timestamp from the database
+        activation_time = datetime.fromisoformat(result['last_succubus_activation'])
             
-        return datetime.fromisoformat(result['last_succubus_activation'])
+        return activation_time
 
     # Migration method
     def migrate_from_json(self, scoreboard_path: str, items_path: str, succubus_path: str):

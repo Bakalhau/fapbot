@@ -4,11 +4,66 @@ import random
 import json
 import os
 from datetime import datetime, timedelta
+from utils.succubus.manager import SuccubusManager
 
 class Succubus(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.succubus_data = self.load_succubus_data()
+        self.succubus_manager = SuccubusManager(bot)
+        self.bot.loop.create_task(self.initialize_active_succubus())
+        
+    async def initialize_active_succubus(self):
+        """
+        Initialize all active succubus abilities and burdens when the bot starts
+        """
+        # Wait for bot to be ready
+        await self.bot.wait_until_ready()
+        
+        try:
+            file_manager = self.bot.get_cog('FileManager')
+            if not file_manager:
+                print("ERROR: FileManager not found, cannot initialize succubus")
+                return
+                
+            # Get all users with active succubus
+            conn, cur = file_manager.db.get_connection()
+            cur.execute("SELECT user_id, active_succubus FROM users WHERE active_succubus IS NOT NULL")
+            users_with_active = cur.fetchall()
+            conn.close()
+            
+            print(f"Initializing {len(users_with_active)} active succubus...")
+            
+            # Initialize each active succubus
+            for user_data in users_with_active:
+                user_id = user_data['user_id']
+                succubus_id = user_data['active_succubus']
+                
+                # Get the handler
+                handler = self.succubus_manager.handlers.get(succubus_id)
+                if handler:
+                    # Get the user object
+                    user = await self.bot.fetch_user(int(user_id))
+                    if user:
+                        # Create a context-like object with just the necessary attributes
+                        ctx = type('obj', (object,), {
+                            'author': user,
+                            'bot': self.bot,
+                            'guild': None,
+                            'channel': None,
+                            'message': None,
+                            'command': None
+                        })
+                        
+                        # Apply ability and burden
+                        try:
+                            await handler.apply_ability(ctx)
+                            await handler.apply_burden(ctx)
+                            print(f"Initialized {succubus_id} for user {user_id}")
+                        except Exception as e:
+                            print(f"Error initializing {succubus_id} for user {user_id}: {e}")
+        except Exception as e:
+            print(f"Error in initialize_active_succubus: {e}")
 
     def load_succubus_data(self):
         """Carrega os dados de succubus do JSON"""
@@ -217,6 +272,13 @@ class Succubus(commands.Cog):
                 ctx.command.reset_cooldown(ctx)  # Reset cooldown if it fails
                 return
                 
+        # Clean up any existing active succubus tasks
+        active_succubus_id = file_manager.db.get_active_succubus(user_id)
+        if active_succubus_id:
+            old_handler = self.succubus_manager.handlers.get(active_succubus_id)
+            if old_handler and hasattr(old_handler, 'cleanup_tasks'):
+                old_handler.cleanup_tasks(user_id)
+        
         # Activate the succubus
         success = file_manager.db.activate_succubus(user_id, succubus_id)
         if success:
@@ -231,6 +293,12 @@ class Succubus(commands.Cog):
             
             if succubus['image']:
                 embed.set_image(url=succubus['image'])
+            
+            # Apply the succubus ability and burden
+            handler = self.succubus_manager.handlers.get(succubus_id)
+            if handler:
+                await handler.apply_ability(ctx)
+                await handler.apply_burden(ctx)
                 
             await ctx.send(embed=embed)
         else:

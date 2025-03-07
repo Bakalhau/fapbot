@@ -1,4 +1,5 @@
 from utils.succubus.astarielle import AstarielleHandler
+from utils.succubus.eryndra import EryndraHandler
 
 class SuccubusManager:
     """
@@ -18,6 +19,7 @@ class SuccubusManager:
         
         # Initialize handlers
         self.handlers["astarielle"] = AstarielleHandler(bot)
+        self.handlers["eryndra"] = EryndraHandler(bot)
         # More handlers will be added as they are implemented
     
     @property

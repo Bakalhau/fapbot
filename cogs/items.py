@@ -2,11 +2,13 @@ import discord
 from discord.ext import commands
 from datetime import datetime, timedelta
 import random
+from utils.succubus.manager import SuccubusManager
 
 class Items(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.shield_active = {}
+        self.succubus_manager = SuccubusManager(bot)
 
     def is_shield_active(self, user_id):
         return user_id in self.shield_active and datetime.now() <= self.shield_active[user_id]
@@ -37,15 +39,23 @@ class Items(commands.Cog):
         
         items = file_manager.db.get_user_items(user_id)
         if items.get("Redemption", 0) > 0:
+            # Check item failure
+            if self.succubus_manager.check_item_failure(user_id):
+                await ctx.send(f'{username}, your Redemption failed to work due to Ravienna\'s burden!')
+                file_manager.db.update_item_quantity(user_id, "Redemption", -1)
+                return
+                
             file_manager.db.update_item_quantity(user_id, "Redemption", -1)
-            
             user_data = file_manager.db.get_user(user_id)
-            new_score = max(0, user_data['score'] - 1)
+            # Apply effectiveness modifier
+            original_points = 1
+            points_to_remove = self.succubus_manager.get_modified_item_effect(user_id, "Redemption", original_points)
+            new_score = max(0, user_data['score'] - points_to_remove)
             file_manager.db.update_user_score(user_id, user_data['faps'], new_score)
             
-            await ctx.send(f'{username}, you used a Redemption and removed 1 point from your Score.')
+            await ctx.send(f'{username}, you used a Redemption and removed {points_to_remove} point(s) from your Score.')
         else:
-            await ctx.send(f'{username}, you don\'t have any Redemption. Buy one from the store using `{prefix}store')
+            await ctx.send(f'{username}, you don\'t have any Redemption. Buy one from the store using `{self.bot.command_prefix}store`')
 
     @commands.command()
     async def supremeredemption(self, ctx):
@@ -55,15 +65,23 @@ class Items(commands.Cog):
         
         items = file_manager.db.get_user_items(user_id)
         if items.get("Supreme Redemption", 0) > 0:
+            # Check item failure
+            if self.succubus_manager.check_item_failure(user_id):
+                await ctx.send(f'{username}, your Supreme Redemption failed to work due to Ravienna\'s burden!')
+                file_manager.db.update_item_quantity(user_id, "Supreme Redemption", -1)
+                return
+                
             file_manager.db.update_item_quantity(user_id, "Supreme Redemption", -1)
-            
             user_data = file_manager.db.get_user(user_id)
-            new_score = max(0, user_data['score'] - 5)
+            # Apply effectiveness modifier
+            original_points = 5
+            points_to_remove = self.succubus_manager.get_modified_item_effect(user_id, "Supreme Redemption", original_points)
+            new_score = max(0, user_data['score'] - points_to_remove)
             file_manager.db.update_user_score(user_id, user_data['faps'], new_score)
             
-            await ctx.send(f'{username}, you used a Supreme Redemption and removed 5 points from your Score.')
+            await ctx.send(f'{username}, you used a Supreme Redemption and removed {points_to_remove} points from your Score.')
         else:
-            await ctx.send(f'{username}, you don\'t have any Supreme Redemption. Buy one from the store using `{prefix}store')
+            await ctx.send(f'{username}, you don\'t have any Supreme Redemption. Buy one from the store using `{self.bot.command_prefix}store`')
 
     @commands.command()
     async def fapshield(self, ctx):
@@ -73,11 +91,20 @@ class Items(commands.Cog):
         
         items = file_manager.db.get_user_items(user_id)
         if items.get("Fap Shield", 0) > 0:
+            # Check item failure
+            if self.succubus_manager.check_item_failure(user_id):
+                await ctx.send(f'{username}, your Fap Shield failed to work due to Ravienna\'s burden!')
+                file_manager.db.update_item_quantity(user_id, "Fap Shield", -1)
+                return
+                
             file_manager.db.update_item_quantity(user_id, "Fap Shield", -1)
-            self.shield_active[user_id] = datetime.now() + timedelta(hours=1)
-            await ctx.send(f'{username}, you activated the Fap Shield! For 1 hour, your points won\'t increase your score.')
+            # Apply effectiveness modifier
+            original_hours = 1
+            modified_hours = self.succubus_manager.get_modified_item_effect(user_id, "Fap Shield", original_hours)
+            self.shield_active[user_id] = datetime.now() + timedelta(hours=modified_hours)
+            await ctx.send(f'{username}, you activated the Fap Shield! For {modified_hours} hours, your points won\'t increase your score.')
         else:
-            await ctx.send(f'{username}, you don\'t have any Fap Shield. Buy one from the store using `{prefix}store')
+            await ctx.send(f'{username}, you don\'t have any Fap Shield. Buy one from the store using `{self.bot.command_prefix}store`')
 
     @commands.command()
     async def ultrafapshield(self, ctx):
@@ -87,11 +114,20 @@ class Items(commands.Cog):
         
         items = file_manager.db.get_user_items(user_id)
         if items.get("Ultra Fap Shield", 0) > 0:
+            # Check item failure
+            if self.succubus_manager.check_item_failure(user_id):
+                await ctx.send(f'{username}, your Ultra Fap Shield failed to work due to Ravienna\'s burden!')
+                file_manager.db.update_item_quantity(user_id, "Ultra Fap Shield", -1)
+                return
+                
             file_manager.db.update_item_quantity(user_id, "Ultra Fap Shield", -1)
-            self.shield_active[user_id] = datetime.now() + timedelta(hours=2)
-            await ctx.send(f'{username}, you activated the Ultra Fap Shield! For 2 hours, your points won\'t increase your score.')
+            # Apply effectiveness modifier
+            original_hours = 2
+            modified_hours = self.succubus_manager.get_modified_item_effect(user_id, "Ultra Fap Shield", original_hours)
+            self.shield_active[user_id] = datetime.now() + timedelta(hours=modified_hours)
+            await ctx.send(f'{username}, you activated the Ultra Fap Shield! For {modified_hours} hours, your points won\'t increase your score.')
         else:
-            await ctx.send(f'{username}, you don\'t have any Ultra Fap Shield. Buy one from the store using `{prefix}store')
+            await ctx.send(f'{username}, you don\'t have any Ultra Fap Shield. Buy one from the store using `{self.bot.command_prefix}store`')
 
     @commands.command()
     async def faproll(self, ctx):
@@ -105,7 +141,7 @@ class Items(commands.Cog):
             file_manager.db.update_item_quantity(user_id, "Faproll", -1)
 
             probabilities = file_manager.get_probabilities()
-            # Filtra apenas as probabilidades dos itens (excluindo ritual_probabilities)
+            # Filter only item probabilities (excluding ritual_probabilities)
             item_probabilities = {k: v for k, v in probabilities.items() if k != 'ritual_probabilities'}
             
             items_list = list(item_probabilities.keys())

@@ -1,5 +1,6 @@
 from utils.succubus.astarielle import AstarielleHandler
 from utils.succubus.eryndra import EryndraHandler
+from utils.succubus.ravienna import RaviennaHandler
 
 class SuccubusManager:
     """
@@ -20,7 +21,7 @@ class SuccubusManager:
         # Initialize handlers
         self.handlers["astarielle"] = AstarielleHandler(bot)
         self.handlers["eryndra"] = EryndraHandler(bot)
-        # More handlers will be added as they are implemented
+        self.handlers["ravienna"] = RaviennaHandler(bot)
     
     @property
     def file_manager(self):
@@ -81,3 +82,35 @@ class SuccubusManager:
         if handler and isinstance(handler, AstarielleHandler):
             return handler.get_modified_price(original_price)
         return original_price  # Default price
+    
+    def get_modified_item_effect(self, user_id, item_name, original_value):
+        """
+        Get the modified effect value for an item based on active succubus.
+        
+        Args:
+            user_id (str): The Discord user ID
+            item_name (str): The name of the item
+            original_value: The original effect value (hours or points)
+            
+        Returns:
+            float or int: The modified effect value
+        """
+        handler = self.get_handler_for_user(user_id)
+        if handler and isinstance(handler, RaviennaHandler):
+            return handler.get_modified_item_effect(item_name, original_value)
+        return original_value
+    
+    def check_item_failure(self, user_id):
+        """
+        Check if an item fails to work due to active succubus burden.
+        
+        Args:
+            user_id (str): The Discord user ID
+            
+        Returns:
+            bool: True if the item fails, False if it works
+        """
+        handler = self.get_handler_for_user(user_id)
+        if handler and isinstance(handler, RaviennaHandler):
+            return handler.check_item_failure()
+        return False

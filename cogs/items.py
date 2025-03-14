@@ -14,6 +14,34 @@ class Items(commands.Cog):
         return user_id in self.shield_active and datetime.now() <= self.shield_active[user_id]
 
     @commands.command()
+    async def fairtrade(self, ctx):
+        file_manager = self.bot.get_cog('FileManager')
+        user_id = str(ctx.author.id)
+        username = ctx.author.name
+        
+        # Check if Selphira is active
+        active_succubus_id = file_manager.db.get_active_succubus(user_id)
+        if active_succubus_id != "selphira":
+            await ctx.send(f"{username}, you need to have Selphira active to use this command!")
+            return
+        
+        # Check if the user has enough fapcoins
+        fapcoins = file_manager.db.get_fapcoins(user_id)
+        if fapcoins < 10:
+            await ctx.send(f"{username}, you need at least 10 fapcoins to use this command!")
+            return
+        
+        # Deduct 10 fapcoins
+        file_manager.db.update_fapcoins(user_id, -10)
+        
+        # Remove 1 score
+        user_data = file_manager.db.get_user(user_id)
+        new_score = max(0, user_data['score'] - 1)  # Ensures that the score does not go negative
+        file_manager.db.update_user_score(user_id, user_data['faps'], new_score)
+        
+        await ctx.send(f"{username}, You spent 10 fapcoins and removed 1 point from your score!")
+
+    @commands.command()
     async def items(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
         user_id = str(ctx.author.id)

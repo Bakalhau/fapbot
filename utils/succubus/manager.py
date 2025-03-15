@@ -2,6 +2,7 @@ from utils.succubus.astarielle import AstarielleHandler
 from utils.succubus.eryndra import EryndraHandler
 from utils.succubus.ravienna import RaviennaHandler
 from utils.succubus.selphira import SelphiraHandler
+from utils.succubus.mimi import MimiHandler
 
 class SuccubusManager:
     """
@@ -24,6 +25,7 @@ class SuccubusManager:
         self.handlers["eryndra"] = EryndraHandler(bot)
         self.handlers["ravienna"] = RaviennaHandler(bot)
         self.handlers["selphira"] = SelphiraHandler(bot)
+        self.handlers["mimi"] = MimiHandler(bot)
     
     @property
     def file_manager(self):

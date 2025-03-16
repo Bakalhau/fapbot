@@ -1,11 +1,13 @@
 import discord
 from discord.ext import commands
 from discord.ui import View, Button
+from utils.succubus.manager import SuccubusManager
 
 class ScoreboardButton(Button):
     def __init__(self, bot):
         super().__init__(emoji='💦', style=discord.ButtonStyle.primary)
         self.bot = bot
+        self.succubus_manager = SuccubusManager(bot)
 
     async def callback(self, interaction: discord.Interaction):
         file_manager = self.bot.get_cog('FileManager')
@@ -27,6 +29,14 @@ class ScoreboardButton(Button):
         
         # Update user's score
         file_manager.db.update_user_score(user_id, new_faps, new_score)
+        
+        # Apply Morvina's burden if active
+        handler = self.succubus_manager.get_handler_for_user(user_id)
+        if handler and handler.get_succubus_id() == "morvina":
+            burden_cost = handler.get_burden_cost()
+            current_fapcoins = file_manager.db.get_fapcoins(user_id)
+            if current_fapcoins >= burden_cost:
+                file_manager.db.update_fapcoins(user_id, -burden_cost)
         
         await interaction.response.edit_message(
             embed=create_scoreboard_embed(file_manager.db.get_scoreboard()),

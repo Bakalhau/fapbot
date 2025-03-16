@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord.ui import View, Button
 from datetime import datetime, timedelta
 from utils.succubus.manager import SuccubusManager
+from utils.succubus.trinerva import TrinervaHandler
 
 class PurchaseButton(Button):
     def __init__(self, item, item_info, user_id, bot):
@@ -107,21 +108,31 @@ class Store(commands.Cog):
         file_manager.db.create_or_update_user(user_id, username)
         
         # Get the daily cooldown based on active succubus
-        daily_cooldown = self.succubus_manager.get_daily_cooldown(user_id)
+        handler = self.succubus_manager.get_handler_for_user(user_id)
+        if handler and isinstance(handler, TrinervaHandler):
+            daily_cooldown = handler.get_daily_cooldown()
+        else:
+            daily_cooldown = 12
         
         last_daily = file_manager.db.get_last_daily(user_id)
         if not last_daily or (now - last_daily) >= timedelta(hours=daily_cooldown):
-            file_manager.db.update_fapcoins(user_id, 1)
+            # Check if Trinerva's ability grants double reward
+            if handler and isinstance(handler, TrinervaHandler) and handler.check_double_reward():
+                reward = 2
+            else:
+                reward = 1
+                
+            file_manager.db.update_fapcoins(user_id, reward)
             file_manager.db.update_daily_timestamp(user_id)
             coins = file_manager.db.get_fapcoins(user_id)
             
             # Add note about Astarielle if active
             active_succubus_id = file_manager.db.get_active_succubus(user_id)
             if active_succubus_id == "astarielle":
-                await ctx.send(f'{username}, you received 1 Fapcoin! 💰 Total: {coins} Fapcoins.\n'
+                await ctx.send(f'{username}, you received {reward} Fapcoin! 💰 Total: {coins} Fapcoins.\n'
                               f'*Astarielle\'s ability reduced your daily cooldown to {daily_cooldown} hours.*')
             else:
-                await ctx.send(f'{username}, you received 1 Fapcoin! 💰 Total: {coins} Fapcoins.')
+                await ctx.send(f'{username}, you received {reward} Fapcoin! 💰 Total: {coins} Fapcoins.')
         else:
             time_since_last = now - last_daily
             remaining_time = timedelta(hours=daily_cooldown) - time_since_last
@@ -129,7 +140,11 @@ class Store(commands.Cog):
             # Make sure remaining time is positive
             if remaining_time.total_seconds() <= 0:
                 # If we get here, there's a timezone issue - allow claiming daily
-                file_manager.db.update_fapcoins(user_id, 1)
+                if handler and isinstance(handler, TrinervaHandler) and handler.check_double_reward():
+                    reward = 2
+                else:
+                    reward = 1
+                file_manager.db.update_fapcoins(user_id, reward)
                 file_manager.db.update_daily_timestamp(user_id)
                 coins = file_manager.db.get_fapcoins(user_id)
                 
@@ -139,10 +154,10 @@ class Store(commands.Cog):
                 # Add note about Astarielle if active
                 active_succubus_id = file_manager.db.get_active_succubus(user_id)
                 if active_succubus_id == "astarielle":
-                    await ctx.send(f'{username}, you received 1 Fapcoin! 💰 Total: {coins} Fapcoins.\n'
+                    await ctx.send(f'{username}, you received {reward} Fapcoin! 💰 Total: {coins} Fapcoins.\n'
                                   f'*Astarielle\'s ability reduced your daily cooldown to {daily_cooldown} hours.*')
                 else:
-                    await ctx.send(f'{username}, you received 1 Fapcoin! 💰 Total: {coins} Fapcoins.')
+                    await ctx.send(f'{username}, you received {reward} Fapcoin! 💰 Total: {coins} Fapcoins.')
                 return
             
             # Extract hours and minutes

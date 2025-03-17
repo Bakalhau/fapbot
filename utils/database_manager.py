@@ -91,6 +91,13 @@ class DatabaseManager:
         conn.close()
         return result
 
+    def get_all_users(self) -> List[str]:
+        conn, cur = self.get_connection()
+        cur.execute("SELECT user_id FROM users")
+        result = [row['user_id'] for row in cur.fetchall()]
+        conn.close()
+        return result
+
     # Item methods
     def get_user_items(self, user_id: str) -> Dict[str, int]:
         conn, cur = self.get_connection()
@@ -287,64 +294,3 @@ class DatabaseManager:
         activation_time = datetime.fromisoformat(result['last_succubus_activation'])
             
         return activation_time
-
-    # Migration method
-    def migrate_from_json(self, scoreboard_path: str, items_path: str, succubus_path: str):
-        """Migrate existing JSON data to SQLite database"""
-        # Load JSON data
-        with open(scoreboard_path) as f:
-            scoreboard = json.load(f)
-        with open(items_path) as f:
-            items_data = json.load(f)
-        with open(succubus_path) as f:
-            succubus_data = json.load(f)
-
-        conn, cur = self.get_connection()
-
-        # Migrate users and scores
-        for username, data in scoreboard.items():
-            cur.execute("""
-                INSERT INTO users (user_id, username, faps, score, fapcoins)
-                VALUES (?, ?, ?, ?, ?)
-                ON CONFLICT(user_id) DO UPDATE SET
-                    faps = ?, score = ?, fapcoins = ?
-            """, (
-                username, username, data['faps'], data['score'],
-                items_data.get('fapcoins', {}).get(username, 0),
-                data['faps'], data['score'],
-                items_data.get('fapcoins', {}).get(username, 0)
-            ))
-
-        # Migrate items
-        for username, items in items_data.get('items', {}).items():
-            for item_name, quantity in items.items():
-                cur.execute("""
-                    INSERT INTO items (user_id, item_name, quantity)
-                    VALUES (?, ?, ?)
-                    ON CONFLICT(user_id, item_name) DO UPDATE SET quantity = ?
-                """, (username, item_name, quantity, quantity))
-
-        # Migrate succubus data
-        for succubus_id, data in succubus_data['available_succubus'].items():
-            cur.execute("""
-                INSERT INTO available_succubus 
-                (succubus_id, name, image_url, ability, ability_description,
-                 burden, burden_description, rarity)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                succubus_id, data['name'], data['image'],
-                data['ability'], data['ability_description'],
-                data['burden'], data['burden_description'],
-                data['rarity']
-            ))
-
-        # Migrate user succubus
-        for user_id, succubus_list in succubus_data['user_succubus'].items():
-            for succubus_id, details in succubus_list.items():
-                cur.execute("""
-                    INSERT INTO user_succubus (user_id, succubus_id, acquired_date)
-                    VALUES (?, ?, ?)
-                """, (user_id, succubus_id, details['acquired_date']))
-
-        conn.commit()
-        conn.close()

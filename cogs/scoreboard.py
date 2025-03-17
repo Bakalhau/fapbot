@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ui import View, Button
+import random
 from utils.succubus.manager import SuccubusManager
 
 class ScoreboardButton(Button):
@@ -23,22 +24,61 @@ class ScoreboardButton(Button):
         
         # Check if shield is active
         items_cog = self.bot.get_cog('Items')
-        new_score = user_data['score']
-        if not items_cog.is_shield_active(user_id):
-            new_score += 1
+        shield_active = items_cog.is_shield_active(user_id)
         
-        # Update user's score
-        file_manager.db.update_user_score(user_id, new_faps, new_score)
+        # Initialize score change
+        score_change = 0 if shield_active else 1
+        
+        # Get handler for user
+        handler = self.succubus_manager.get_handler_for_user(user_id)
+        
+        # Apply Velvetha's ability and burden if active
+        if handler and handler.get_succubus_id() == "velvetha":
+            # First, check if score is transferred (15% chance)
+            if handler.check_transfer():
+                # Get list of all users except the current one
+                all_users = file_manager.db.get_all_users()
+                other_users = [u for u in all_users if u != user_id]
+                if other_users:  # Verifica se a lista não está vazia
+                    target_user = random.choice(other_users)
+                    target_data = file_manager.db.get_user(target_user) or {'faps': 0, 'score': 0}
+                    new_target_score = target_data['score'] + 1
+                    file_manager.db.update_user_score(target_user, target_data['faps'], new_target_score)
+                    await interaction.response.send_message(f"{username}'s score was transferred to another user!", ephemeral=True)
+                    score_change = 0  # No score change for the user
+                else:
+                    # Caso não haja outros usuários, informamos o usuário
+                    await interaction.response.send_message(f"{username}, there are no other users to transfer the score to.", ephemeral=True)
+            else:
+                # If not transferred, check for extra points (20% chance)
+                if handler.check_extra_points():
+                    score_change += handler.get_extra_points_amount()
         
         # Apply Morvina's burden if active
-        handler = self.succubus_manager.get_handler_for_user(user_id)
         if handler and handler.get_succubus_id() == "morvina":
             burden_cost = handler.get_burden_cost()
             current_fapcoins = file_manager.db.get_fapcoins(user_id)
             if current_fapcoins >= burden_cost:
                 file_manager.db.update_fapcoins(user_id, -burden_cost)
         
-        await interaction.response.edit_message(
+        # Update user's score
+        new_score = user_data['score'] + score_change
+        file_manager.db.update_user_score(user_id, new_faps, new_score)
+        
+        # Send response based on the outcome
+        if score_change > 0:
+            if score_change > 1:
+                await interaction.response.send_message(f"{username} added a fap and received {score_change} points (including extra points)!", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"{username} added a fap and received {score_change} point!", ephemeral=True)
+        elif score_change == 0 and handler and handler.get_succubus_id() == "velvetha" and handler.check_transfer():
+            # Mensagem já enviada acima no caso de transferência ou falta de usuários
+            pass
+        else:
+            await interaction.response.send_message(f"{username} added a fap!", ephemeral=True)
+        
+        # Update the scoreboard message
+        await interaction.message.edit(
             embed=create_scoreboard_embed(file_manager.db.get_scoreboard()),
             view=ScoreboardView(self.bot)
         )

@@ -151,7 +151,7 @@ class EryndraHandler(SuccubusHandler):
         try:
             while self.is_active_for_user(user_id):
                 # Wait for 1 hour
-                await asyncio.sleep(5)  # 1 hour
+                await asyncio.sleep(3600)  # 1 hour
                 
                 # Check if still active
                 if not self.is_active_for_user(user_id):

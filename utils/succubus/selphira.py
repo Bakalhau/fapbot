@@ -1,6 +1,7 @@
 from .base import SuccubusHandler
 from datetime import datetime, timedelta
 import asyncio
+import discord
 
 class SelphiraHandler(SuccubusHandler):
     def __init__(self, bot):
@@ -27,11 +28,11 @@ class SelphiraHandler(SuccubusHandler):
         Applies Selphira's burden: Every 3 days, adds 1 score to the user
 
         Args:
-        ctx: The context of the command
-        **kwargs: Additional arguments
+            ctx: The context of the command
+            **kwargs: Additional arguments
 
         Returns:
-        bool: True if the burden was applied
+            bool: True if the burden was applied
         """
         user_id = str(ctx.author.id)
         
@@ -47,10 +48,10 @@ class SelphiraHandler(SuccubusHandler):
     
     async def apply_periodic_burden(self, user_id):
         """
-        Adds 1 score to the user every 3 days
+        Adds 1 score to the user every 3 days and sends a notification
 
         Args:
-        user_id (str): The user's Discord ID
+            user_id (str): The user's Discord ID
         """
         try:
             while self.is_active_for_user(user_id):
@@ -68,8 +69,11 @@ class SelphiraHandler(SuccubusHandler):
                     new_score = user_data['score'] + 1
                     file_manager.db.update_user_score(user_id, user_data['faps'], new_score)
                     print(f"Selphira's Burden applied: +1 score to user {user_id}")
+                    
+                    # Send notification to the user
+                    await self.send_burden_notification(user_id)
             
-            # Clears the task when it is no longer active
+            # Clean up the task when it is no longer active
             if user_id in self.burden_users:
                 del self.burden_users[user_id]
                 
@@ -83,12 +87,36 @@ class SelphiraHandler(SuccubusHandler):
             if user_id in self.burden_users:
                 del self.burden_users[user_id]
     
-    def cleanup_tasks(self, user_id):
+    async def send_burden_notification(self, user_id):
         """
-        Clears running tasks for a user
+        Sends a notification to the configured channel when the burden is applied
 
         Args:
-        user_id (str): The user's Discord ID
+            user_id (str): The user's Discord ID
+        """
+        # Get the notification channel from config, fallback to first allowed channel
+        notification_channel_id = self.bot.config.get('notification_channel', self.bot.config['allowed_channels'][0])
+        channel = self.bot.get_channel(notification_channel_id)
+        if channel:
+            # Send a text message mentioning the user
+            await channel.send(f"<@{user_id}>")
+            
+            # Send an embed with details
+            embed = discord.Embed(
+                title="💀 Selphira's Burden 💀",
+                description="You have received +1 score due to Selphira's burden.",
+                color=discord.Color.red()
+            )
+            await channel.send(embed=embed)
+        else:
+            print(f"Notification channel {notification_channel_id} not found for burden notification to user {user_id}")
+    
+    def cleanup_tasks(self, user_id):
+        """
+        Cleans up any running tasks for a user
+
+        Args:
+            user_id (str): The user's Discord ID
         """
         if user_id in self.burden_users:
             self.burden_users[user_id].cancel()

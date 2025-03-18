@@ -3,5 +3,6 @@
     "allowed_channels": [
         1234567890,
         9876543210
-    ]
+    ],
+    "notification_channel": 1234567890
 }

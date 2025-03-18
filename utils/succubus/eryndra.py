@@ -18,6 +18,18 @@ class EryndraHandler(SuccubusHandler):
         self.false_alarm_chance = 0.30  # 30% chance
         self.false_alarm_users = {}  # Track users with active false alarm tasks
         self.daily_notification_users = {}  # Track users with active daily notification tasks
+        self.false_alarm_messages = [
+            "Oops! False alarm! Your daily isn't ready yet.",
+            "Gotcha! It's not time for your daily reward.",
+            "Just kidding! Your daily is still on cooldown.",
+            "Psyche! You'll have to wait a bit longer for your daily.",
+            "False alert! Your daily reward isn't available yet.",
+            "Tricked ya! Check back later for your daily.",
+            "Not yet! Your daily will be ready soon.",
+            "Surprise! It's not daily time yet.",
+            "Hold on! Your daily is still charging.",
+            "Almost there! But not quite ready for your daily."
+        ]
         
     def get_succubus_id(self):
         """
@@ -54,7 +66,7 @@ class EryndraHandler(SuccubusHandler):
     
     async def monitor_daily_availability(self, user_id, user):
         """
-        Monitor daily availability for a user and send a DM when available
+        Monitor daily availability for a user and send a notification to the configured channel
         
         Args:
             user_id (str): The Discord user ID
@@ -68,24 +80,24 @@ class EryndraHandler(SuccubusHandler):
                 
                 # If no last daily or it was more than 12 hours ago
                 if not last_daily or (now - last_daily) >= timedelta(hours=12):
-                    # Send notification
-                    try:
+                    # Get the notification channel from config, fallback to first allowed channel
+                    notification_channel_id = self.bot.config.get('notification_channel', self.bot.config['allowed_channels'][0])
+                    channel = self.bot.get_channel(notification_channel_id)
+                    if channel:
+                        await channel.send(f"<@{user_id}>")
                         embed = discord.Embed(
                             title="✨ Daily Available! ✨",
-                            description="Your daily reward is now available! Use the `daily` command to claim it.",
+                            description=f"<@{user_id}>, your daily reward is now available! Use the `daily` command to claim it.",
                             color=discord.Color.green()
                         )
                         embed.set_footer(text="Eryndra's ability: Daily notification")
-                        
-                        # Try to DM the user
-                        await user.send(embed=embed)
+                        await channel.send(embed=embed)
                         
                         # Wait for 12 hours before checking again to avoid spam
                         await asyncio.sleep(12 * 3600)
-                    except discord.Forbidden:
-                        # User has DMs closed, stop monitoring
-                        print(f"Cannot send DM to user {user_id}, DMs closed")
-                        break
+                    else:
+                        print(f"Notification channel {notification_channel_id} not found for daily notification to user {user_id}")
+                        break  # Stop monitoring if channel is not found
                 
                 # Check every 5 minutes
                 await asyncio.sleep(300)  # 5 minutes
@@ -130,7 +142,7 @@ class EryndraHandler(SuccubusHandler):
     
     async def send_false_alarms(self, user_id, user):
         """
-        Send false alarms to a user
+        Send false alarms to the configured channel for a user
         
         Args:
             user_id (str): The Discord user ID
@@ -139,7 +151,7 @@ class EryndraHandler(SuccubusHandler):
         try:
             while self.is_active_for_user(user_id):
                 # Wait for 1 hour
-                await asyncio.sleep(3600)  # 1 hour
+                await asyncio.sleep(5)  # 1 hour
                 
                 # Check if still active
                 if not self.is_active_for_user(user_id):
@@ -147,20 +159,21 @@ class EryndraHandler(SuccubusHandler):
                     
                 # 30% chance of false alarm
                 if random.random() < self.false_alarm_chance:
-                    try:
+                    # Get the notification channel from config, fallback to first allowed channel
+                    notification_channel_id = self.bot.config.get('notification_channel', self.bot.config['allowed_channels'][0])
+                    channel = self.bot.get_channel(notification_channel_id)
+                    if channel:
+                        await channel.send(f"<@{user_id}>")
                         embed = discord.Embed(
-                            title="⚠️ DAILY AVAILABLE! ⚠️",
-                            description="Your daily reward is now available! Use the `daily` command to claim it.",
+                            title="⚠️ False Alarm! ⚠️",
+                            description=f"<@{user_id}>, {random.choice(self.false_alarm_messages)}",
                             color=discord.Color.red()
                         )
                         embed.set_footer(text="Eryndra's burden: False Alarm!")
-                        
-                        # Try to DM the user
-                        await user.send(embed=embed)
-                    except discord.Forbidden:
-                        # User has DMs closed, stop monitoring
-                        print(f"Cannot send DM to user {user_id}, DMs closed")
-                        break
+                        await channel.send(embed=embed)
+                    else:
+                        print(f"Notification channel {notification_channel_id} not found for false alarm to user {user_id}")
+                        break  # Stop monitoring if channel is not found
             
             # Clean up when no longer active
             if user_id in self.false_alarm_users:

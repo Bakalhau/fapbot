@@ -1,21 +1,21 @@
 {
     "Fap Shield": {
-      "emoji": "<:1_hour_shield:1325569722498158724>",
+      "emoji": "<:1_hour_shield:1325956894392582225>",
       "cost": 30,
       "description": "Fique livre para bater quantas punhetas quiser por 1 hora!"
     },
     "Ultra Fap Shield": {
-      "emoji": "<:2_hour_shield:1325569788357120062>",
+      "emoji": "<:2_hour_shield:1325956910410629163>",
       "cost": 55,
       "description": "Fique livre para bater quantas punhetas quiser por 2 horas!"
     },
     "Redemption": {
-      "emoji": "<:redemption:1325572543213600778>",
+      "emoji": "<:redemption:1325956922494423100>",
       "cost": 30,
       "description": "Receba redenção e retire 1 punheta do seu Score."
     },
     "Supreme Redemption": {
-      "emoji": "<:supreme_redemption:1325572624864116837>",
+      "emoji": "<:supreme_redemption:1325956933416648815>",
       "cost": 65,
       "description": "Receba redenção e retire 5 punhetas do seu Score."
     },
@@ -25,7 +25,7 @@
       "description": "Tente a sorte e talvez ganhe algum item útil!"
     },
     "Ritual": {
-      "emoji": "<:ritual:1328294890165108778>",
+      "emoji": "<:ritual:1327770775771549807>",
       "cost": 30,
       "description": "Faça um ritual e sumune uma succubus, talvez ela possa te ajudar com algo 😈"
   }

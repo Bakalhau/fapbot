@@ -131,12 +131,23 @@ def create_scoreboard_embed(scoreboard_data):
     if not scoreboard_data:
         embed.add_field(name="No faps yet", value="Click the emoji to start!", inline=False)
     else:
-        for entry in scoreboard_data:
-            embed.add_field(
-                name=entry['username'],
-                value=f'Faps: {entry["faps"]} | Score: {entry["score"]}',
-                inline=False
-            )
+        # Sort users by score descending
+        sorted_users = sorted(scoreboard_data, key=lambda x: x['score'], reverse=True)
+        if sorted_users:
+            max_score = sorted_users[0]['score']
+            min_score = sorted_users[-1]['score']
+            for entry in sorted_users:
+                emojis = ""
+                if entry['score'] == max_score:
+                    emojis += " 🍆"  # Add eggplant for highest score
+                if entry['score'] == min_score:
+                    emojis += " 🏆"  # Add trophy for lowest score
+                name_with_emojis = f"{entry['username']}{emojis}"
+                embed.add_field(
+                    name=name_with_emojis,
+                    value=f'Faps: {entry["faps"]} | Score: {entry["score"]}',
+                    inline=False
+                )
     return embed
 
 async def setup(bot):

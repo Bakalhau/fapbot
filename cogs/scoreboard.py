@@ -103,7 +103,7 @@ class Scoreboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(aliases=["sb","placar"])
     async def scoreboard(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
         await ctx.send(

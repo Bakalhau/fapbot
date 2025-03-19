@@ -13,7 +13,7 @@ class Items(commands.Cog):
     def is_shield_active(self, user_id):
         return user_id in self.shield_active and datetime.now() <= self.shield_active[user_id]
 
-    @commands.command()
+    @commands.command(aliases=["ft","trocajusta"])
     async def fairtrade(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
         user_id = str(ctx.author.id)
@@ -85,7 +85,7 @@ class Items(commands.Cog):
         else:
             await ctx.send(f'{username}, you don\'t have any Redemption. Buy one from the store using `{self.bot.command_prefix}store`')
 
-    @commands.command()
+    @commands.command(aliases=["sr"])
     async def supremeredemption(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
         user_id = str(ctx.author.id)
@@ -111,7 +111,7 @@ class Items(commands.Cog):
         else:
             await ctx.send(f'{username}, you don\'t have any Supreme Redemption. Buy one from the store using `{self.bot.command_prefix}store`')
 
-    @commands.command()
+    @commands.command(aliases=["fs"])
     async def fapshield(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
         user_id = str(ctx.author.id)
@@ -134,7 +134,7 @@ class Items(commands.Cog):
         else:
             await ctx.send(f'{username}, you don\'t have any Fap Shield. Buy one from the store using `{self.bot.command_prefix}store`')
 
-    @commands.command()
+    @commands.command(aliases=["uf"])
     async def ultrafapshield(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
         user_id = str(ctx.author.id)
@@ -157,7 +157,7 @@ class Items(commands.Cog):
         else:
             await ctx.send(f'{username}, you don\'t have any Ultra Fap Shield. Buy one from the store using `{self.bot.command_prefix}store`')
 
-    @commands.command()
+    @commands.command(aliases=["fr","roll"])
     async def faproll(self, ctx):
         prefix = self.bot.command_prefix
         file_manager = self.bot.get_cog('FileManager')

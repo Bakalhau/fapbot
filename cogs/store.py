@@ -64,7 +64,7 @@ class Store(commands.Cog):
         self.bot = bot
         self.succubus_manager = SuccubusManager(bot)
 
-    @commands.command()
+    @commands.command(aliases=["loja"])
     async def store(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
         user_id = str(ctx.author.id)
@@ -173,7 +173,7 @@ class Store(commands.Cog):
             else:
                 await ctx.send(f'{username}, you already got your daily Fapcoin! Try again in {hours}h {minutes}m.')
 
-    @commands.command()
+    @commands.command(aliases=["fc"])
     async def fapcoin(self, ctx):
         file_manager = self.bot.get_cog('FileManager')
         user_id = str(ctx.author.id)

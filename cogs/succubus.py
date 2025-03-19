@@ -86,7 +86,7 @@ class Succubus(commands.Cog):
             if sdata['rarity'] == rarity
         ]
 
-    @commands.command()
+    @commands.command(aliases=["ms"])
     async def mysuccubus(self, ctx):
         """Show all succubus owned by the user"""
         file_manager = self.bot.get_cog('FileManager')
@@ -113,7 +113,7 @@ class Succubus(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(aliases=["si"])
     async def succubusinfo(self, ctx, *, name: str):
         """Show detailed information about a specific succubus"""
         succubus = None
@@ -211,7 +211,7 @@ class Succubus(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(aliases=["ls"])
     async def listsuccubus(self, ctx):
         """List all available succubus"""
         succubus_list = self.get_all_succubus().values()
@@ -228,7 +228,7 @@ class Succubus(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(aliases=["ativar"])
     @commands.cooldown(1, 604800, commands.BucketType.user)  # 1-week cooldown (7 * 24 * 60 * 60 seconds)
     async def activate(self, ctx, *, name: str):
         """Activates a succubus that the user owns (cooldown: 1 week)"""
@@ -305,7 +305,7 @@ class Succubus(commands.Cog):
             await ctx.send("Error activating the succubus!")
             ctx.command.reset_cooldown(ctx)  # Reset cooldown if it fails
             
-    @commands.command()
+    @commands.command(aliases=["as"])
     async def activesuccubus(self, ctx):
         """Shows the user's currently active succubus"""
         file_manager = self.bot.get_cog('FileManager')

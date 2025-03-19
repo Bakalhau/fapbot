@@ -390,12 +390,14 @@ class Succubus(commands.Cog):
         
     @activate.error
     async def activate_error(self, ctx, error):
-        if isinstance(error, commands.CommandOnCooldown):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("You need to specify the name of the succubus to activate!")
+            ctx.command.reset_cooldown(ctx)  # Reset cooldown if name is missing
+        elif isinstance(error, commands.CommandOnCooldown):
             # Convert seconds into days/hours
             cooldown = error.retry_after
             days = int(cooldown // (24 * 3600))
             hours = int((cooldown % (24 * 3600)) // 3600)
-            
             await ctx.send(f"You need to wait {days} days and {hours} hours to activate another succubus!")
         else:
             await ctx.send(f"Error: {error}")

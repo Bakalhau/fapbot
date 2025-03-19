@@ -39,7 +39,7 @@ class ScoreboardButton(Button):
                 # Get list of all users except the current one
                 all_users = file_manager.db.get_all_users()
                 other_users = [u for u in all_users if u != user_id]
-                if other_users:  # Verifica se a lista não está vazia
+                if other_users:
                     target_user = random.choice(other_users)
                     target_data = file_manager.db.get_user(target_user) or {'faps': 0, 'score': 0}
                     new_target_score = target_data['score'] + 1
@@ -47,7 +47,6 @@ class ScoreboardButton(Button):
                     await interaction.response.send_message(f"{username}'s score was transferred to another user!", ephemeral=True)
                     score_change = 0  # No score change for the user
                 else:
-                    # Caso não haja outros usuários, informamos o usuário
                     await interaction.response.send_message(f"{username}, there are no other users to transfer the score to.", ephemeral=True)
             else:
                 # If not transferred, check for extra points (20% chance)
@@ -56,10 +55,23 @@ class ScoreboardButton(Button):
         
         # Apply Morvina's burden if active
         if handler and handler.get_succubus_id() == "morvina":
-            burden_cost = handler.get_burden_cost()
+            burden_cost = handler.get_burden_cost()  # Typically 3 fapcoins
+            file_manager.db.update_fapcoins(user_id, -burden_cost)
             current_fapcoins = file_manager.db.get_fapcoins(user_id)
-            if current_fapcoins >= burden_cost:
-                file_manager.db.update_fapcoins(user_id, -burden_cost)
+            
+            # Send notification for Morvina's burden
+            notification_channel_id = self.bot.config.get('notification_channel', self.bot.config['allowed_channels'][0])
+            channel = self.bot.get_channel(notification_channel_id)
+            if channel:
+                await channel.send(f"<@{user_id}>, you lost 3 fapcoins due to Morvina's burden! Your current balance is {current_fapcoins} fapcoins.")
+                embed = discord.Embed(
+                    title="💀 Morvina's Burden 💀",
+                    description=f"You lost 3 fapcoins because of Morvina's burden. Current balance: {current_fapcoins} fapcoins.",
+                    color=discord.Color.red()
+                )
+                await channel.send(embed=embed)
+            else:
+                print(f"Notification channel {notification_channel_id} not found for user {user_id}")
         
         # Update user's score
         new_score = user_data['score'] + score_change
@@ -72,8 +84,7 @@ class ScoreboardButton(Button):
             else:
                 await interaction.response.send_message(f"{username} added a fap and received {score_change} point!", ephemeral=True)
         elif score_change == 0 and handler and handler.get_succubus_id() == "velvetha" and handler.check_transfer():
-            # Mensagem já enviada acima no caso de transferência ou falta de usuários
-            pass
+            pass  # Message already sent above
         else:
             await interaction.response.send_message(f"{username} added a fap!", ephemeral=True)
         

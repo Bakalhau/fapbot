@@ -45,6 +45,7 @@ class HelpCog(commands.Cog):
                   f"{prefix}ultrafapshield    - Activate 2-hour protection\n"
                   f"{prefix}redemption        - Remove 1 point from score\n"
                   f"{prefix}supremeredemption - Remove 5 points from score\n"
+                  f"{prefix}ritual            - Draw a succubus with abilities and burdens\n"
                   "```",
             inline=False
         )
@@ -57,7 +58,9 @@ class HelpCog(commands.Cog):
                   f"{prefix}mysuccubus    - View your succubus collection\n"
                   f"{prefix}succubusinfo  - View info about a specific succubus\n"
                   f"{prefix}listsuccubus  - View all available succubus\n"
+                  f"{prefix}activate      - Activates a succubus, gaining its abilities (Cooldown - 1 week)\n"
                   f"{prefix}activesuccubus - Show active effects from your succubus\n"
+                  f"{prefix}fairtrade     - Trade 10 fapcoins for 1 less score (Must have Selphira active)\n"
                   "```",
             inline=False
         )

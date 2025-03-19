@@ -3,6 +3,7 @@ from discord.ext import commands
 import random
 import json
 import os
+import time
 from datetime import datetime, timedelta
 from utils.succubus.manager import SuccubusManager
 
@@ -177,6 +178,9 @@ class Succubus(commands.Cog):
         user_succubus = file_manager.db.get_user_succubus(user_id)
         has_succubus = any(s['succubus_id'] == chosen_succubus['id'] for s in user_succubus)
 
+        await ctx.send("<:roulette:1352049721413206016> Gachando...")
+        time.sleep(3)
+        
         if has_succubus:
             # Compensation for duplicate
             compensation_coins = {

@@ -6,6 +6,7 @@ import os
 import time
 from datetime import datetime, timedelta
 from utils.succubus.manager import SuccubusManager
+import asyncio
 
 class Succubus(commands.Cog):
     def __init__(self, bot):
@@ -233,7 +234,7 @@ class Succubus(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["ativar"])
-    @commands.cooldown(1, 604800, commands.BucketType.user)  # 1-week cooldown (7 * 24 * 60 * 60 seconds)
+    @commands.cooldown(1, 604800, commands.BucketType.user)  # 1-week cooldown
     async def activate(self, ctx, *, name: str):
         """Activates a succubus that the user owns (cooldown: 1 week)"""
         file_manager = self.bot.get_cog('FileManager')
@@ -268,47 +269,72 @@ class Succubus(commands.Cog):
         # Check the timestamp of the last activation
         last_activation = file_manager.db.get_succubus_activation_time(user_id)
         if last_activation:
-            time_diff = datetime.utcnow() - last_activation  # Use UTC for consistency
+            time_diff = datetime.utcnow() - last_activation
             if time_diff < timedelta(days=7):
                 days_left = 7 - time_diff.days
-                hours_left = 24 - time_diff.seconds // 3600
+                hours_left = 24 - (time_diff.seconds // 3600)
                 await ctx.send(f"You need to wait {days_left} more days and {hours_left} hours to activate another succubus!")
                 ctx.command.reset_cooldown(ctx)  # Reset cooldown if it fails
                 return
-                
-        # Clean up any existing active succubus tasks
-        active_succubus_id = file_manager.db.get_active_succubus(user_id)
-        if active_succubus_id:
-            old_handler = self.succubus_manager.handlers.get(active_succubus_id)
-            if old_handler and hasattr(old_handler, 'cleanup_tasks'):
-                old_handler.cleanup_tasks(user_id)
         
-        # Activate the succubus
-        success = file_manager.db.activate_succubus(user_id, succubus_id)
-        if success:
-            embed = discord.Embed(
-                title="✨ Succubus Activated! ✨",
-                description=f"You activated {succubus['name']} ({succubus['rarity'].capitalize()})!",
-                color=discord.Color.purple()
-            )
-            
-            embed.add_field(name="✨ Ability", value=succubus['ability_description'], inline=False)
-            embed.add_field(name="💀 Burden", value=succubus['burden_description'], inline=False)
-            
-            if succubus['image']:
-                embed.set_image(url=succubus['image'])
-            
-            # Apply the succubus ability and burden
-            handler = self.succubus_manager.handlers.get(succubus_id)
-            if handler:
-                await handler.apply_ability(ctx)
-                await handler.apply_burden(ctx)
+        # Confirmation message
+        embed = discord.Embed(
+            title="⚠️ Confirmation Required ⚠️",
+            description=(
+                f"Are you sure you want to activate **{succubus['name']}**?\n"
+                "Once activated, you will be bound to this succubus for 1 week "
+                "and cannot change to another one during that period.\n\n"
+                "Reply with 'yes' to confirm or 'no' to cancel."
+            ),
+            color=discord.Color.orange()
+        )
+        await ctx.send(embed=embed)
+        
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel and m.content.strip().lower() in ["yes", "no"]
+        
+        try:
+            response = await self.bot.wait_for('message', check=check, timeout=30.0)
+            if response.content.strip().lower() == "yes":
+                # Clean up any existing active succubus tasks
+                active_succubus_id = file_manager.db.get_active_succubus(user_id)
+                if active_succubus_id:
+                    old_handler = self.succubus_manager.handlers.get(active_succubus_id)
+                    if old_handler and hasattr(old_handler, 'cleanup_tasks'):
+                        old_handler.cleanup_tasks(user_id)
                 
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send("Error activating the succubus!")
-            ctx.command.reset_cooldown(ctx)  # Reset cooldown if it fails
-            
+                # Activate the succubus
+                success = file_manager.db.activate_succubus(user_id, succubus_id)
+                if success:
+                    embed = discord.Embed(
+                        title="✨ Succubus Activated! ✨",
+                        description=f"You activated {succubus['name']} ({succubus['rarity'].capitalize()})!",
+                        color=discord.Color.purple()
+                    )
+                    
+                    embed.add_field(name="✨ Ability", value=succubus['ability_description'], inline=False)
+                    embed.add_field(name="💀 Burden", value=succubus['burden_description'], inline=False)
+                    
+                    if succubus['image']:
+                        embed.set_image(url=succubus['image'])
+                    
+                    # Apply the succubus ability and burden
+                    handler = self.succubus_manager.handlers.get(succubus_id)
+                    if handler:
+                        await handler.apply_ability(ctx)
+                        await handler.apply_burden(ctx)
+                        
+                    await ctx.send(embed=embed)
+                else:
+                    await ctx.send("Error activating the succubus!")
+                    ctx.command.reset_cooldown(ctx)  # Reset cooldown if activation fails
+            else:
+                await ctx.send("Activation cancelled.")
+                ctx.command.reset_cooldown(ctx)  # Reset cooldown since activation was cancelled
+        except asyncio.TimeoutError:
+            await ctx.send("Activation cancelled due to timeout.")
+            ctx.command.reset_cooldown(ctx)  # Reset cooldown since activation was cancelled
+
     @commands.command(aliases=["as"])
     async def activesuccubus(self, ctx):
         """Shows the user's currently active succubus"""
@@ -335,7 +361,7 @@ class Succubus(commands.Cog):
             
             # Calculate remaining time until the next activation
             next_activation = activation_time + timedelta(days=7)
-            time_until = next_activation - datetime.utcnow()  # Use UTC for consistency
+            time_until = next_activation - datetime.utcnow()
             days_left = time_until.days
             hours_left = time_until.seconds // 3600
             

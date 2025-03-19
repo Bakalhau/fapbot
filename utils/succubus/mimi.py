@@ -2,6 +2,7 @@ from .base import SuccubusHandler
 from datetime import datetime, timedelta
 import asyncio
 import random
+import discord
 
 class MimiHandler(SuccubusHandler):
     """
@@ -68,12 +69,14 @@ class MimiHandler(SuccubusHandler):
                 # Apply the burden: 20% chance to skip the reward
                 if random.random() < self.failure_chance:
                     print(f"Mimi's burden: User {user_id} did not receive the daily reward")
-                    continue
-                
-                # Grant the daily reward (e.g., 1 fapcoin)
-                file_manager = self.bot.get_cog('FileManager')
-                file_manager.db.update_fapcoins(user_id, 1)
-                print(f"Mimi's ability: Automatically granted daily reward to user {user_id}")
+                    await self.send_daily_notification(user_id, success=False)
+                else:
+                    # Grant the daily reward (1 fapcoin)
+                    file_manager = self.bot.get_cog('FileManager')
+                    file_manager.db.update_fapcoins(user_id, 1)
+                    current_fapcoins = file_manager.db.get_fapcoins(user_id)
+                    print(f"Mimi's ability: Automatically granted daily reward to user {user_id}")
+                    await self.send_daily_notification(user_id, success=True, total=current_fapcoins)
             
             # Clean up when the succubus is no longer active for the user
             if user_id in self.daily_users:
@@ -88,6 +91,42 @@ class MimiHandler(SuccubusHandler):
             print(f"Error in auto_grant_daily for user {user_id}: {e}")
             if user_id in self.daily_users:
                 del self.daily_users[user_id]
+    
+    async def send_daily_notification(self, user_id, success, total=None):
+        """
+        Sends a notification to the configured channel about the automatic daily reward status
+        
+        Args:
+            user_id (str): The Discord user ID
+            success (bool): Whether the daily reward was granted or not
+            total (int, optional): The user's current fapcoin total (only for success)
+        """
+        # Get the notification channel from config, fallback to first allowed channel
+        notification_channel_id = self.bot.config.get('notification_channel', self.bot.config['allowed_channels'][0])
+        channel = self.bot.get_channel(notification_channel_id)
+        if channel:
+            if success:
+                # Send text message with mention
+                await channel.send(f"<@{user_id}>, you received your automatic daily reward!")
+                # Send embed with details
+                embed = discord.Embed(
+                    title="✨ Automatic Daily Reward ✨",
+                    description=f"You have received 1 fapcoin thanks to Mimi's ability! Total: {total} fapcoins.",
+                    color=discord.Color.green()
+                )
+                await channel.send(embed=embed)
+            else:
+                # Send text message with mention
+                await channel.send(f"<@{user_id}>, your automatic daily reward failed this time.")
+                # Send embed with details
+                embed = discord.Embed(
+                    title="💀 Automatic Daily Failed 💀",
+                    description="Due to Mimi's burden, you did not receive your daily reward.",
+                    color=discord.Color.red()
+                )
+                await channel.send(embed=embed)
+        else:
+            print(f"Notification channel {notification_channel_id} not found for user {user_id}")
     
     async def apply_burden(self, ctx, **kwargs):
         """

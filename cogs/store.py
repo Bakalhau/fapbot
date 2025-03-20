@@ -107,8 +107,15 @@ class Store(commands.Cog):
         # Ensure user exists in database
         file_manager.db.create_or_update_user(user_id, username)
         
-        # Get the daily cooldown based on active succubus
+        # Get the succubus handler for the user
         handler = self.succubus_manager.get_handler_for_user(user_id)
+        
+        # Check if Mimi is active for the user
+        if handler and handler.get_succubus_id() == "mimi":
+            await ctx.send(f"{username}, you cannot use !daily manually while Mimi is active. Your daily reward is granted automatically!")
+            return
+        
+        # Get the daily cooldown based on active succubus
         daily_cooldown = handler.get_daily_cooldown() if handler else 12
         
         last_daily = file_manager.db.get_last_daily(user_id)
@@ -162,12 +169,11 @@ class Store(commands.Cog):
             hours, remainder = divmod(total_seconds, 3600)
             minutes, _ = divmod(remainder, 60)
             
-            # Add note about Astarielle if active
-            active_succubus_id = file_manager.db.get_active_succubus(user_id)
+            # Add note about active succubus if any
             if handler:
                 succubus_name = handler.get_succubus_id().capitalize()
                 await ctx.send(f'{username}, you already got your daily Fapcoin! Try again in {hours}h {minutes}m.\n'
-                                f'*Your current daily cooldown is {daily_cooldown} hours due to {succubus_name}.*')
+                              f'*Your current daily cooldown is {daily_cooldown} hours due to {succubus_name}.*')
             else:
                 await ctx.send(f'{username}, you already got your daily Fapcoin! Try again in {hours}h {minutes}m.')
 

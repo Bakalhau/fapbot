@@ -109,10 +109,7 @@ class Store(commands.Cog):
         
         # Get the daily cooldown based on active succubus
         handler = self.succubus_manager.get_handler_for_user(user_id)
-        if handler and isinstance(handler, TrinervaHandler):
-            daily_cooldown = handler.get_daily_cooldown()
-        else:
-            daily_cooldown = 12
+        daily_cooldown = handler.get_daily_cooldown() if handler else 12
         
         last_daily = file_manager.db.get_last_daily(user_id)
         if not last_daily or (now - last_daily) >= timedelta(hours=daily_cooldown):
@@ -167,9 +164,10 @@ class Store(commands.Cog):
             
             # Add note about Astarielle if active
             active_succubus_id = file_manager.db.get_active_succubus(user_id)
-            if active_succubus_id == "astarielle":
+            if handler:
+                succubus_name = handler.get_succubus_id().capitalize()
                 await ctx.send(f'{username}, you already got your daily Fapcoin! Try again in {hours}h {minutes}m.\n'
-                              f'*Your cooldown is {daily_cooldown} hours due to Astarielle\'s ability.*')
+                                f'*Your current daily cooldown is {daily_cooldown} hours due to {succubus_name}.*')
             else:
                 await ctx.send(f'{username}, you already got your daily Fapcoin! Try again in {hours}h {minutes}m.')
 

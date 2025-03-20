@@ -73,3 +73,12 @@ class SuccubusHandler:
             str: The succubus ID
         """
         raise NotImplementedError("Succubus handlers must implement get_succubus_id")
+
+    def get_daily_cooldown(self):
+        """
+        Retorna o tempo de cooldown padrão do daily em horas.
+        
+        Returns:
+            int: O tempo de cooldown em horas (padrão: 12)
+        """
+        return 12

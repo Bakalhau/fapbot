@@ -74,6 +74,7 @@ class MimiHandler(SuccubusHandler):
                     # Grant the daily reward (1 fapcoin)
                     file_manager = self.bot.get_cog('FileManager')
                     file_manager.db.update_fapcoins(user_id, 1)
+                    file_manager.db.update_daily_timestamp(user_id)
                     current_fapcoins = file_manager.db.get_fapcoins(user_id)
                     print(f"Mimi's ability: Automatically granted daily reward to user {user_id}")
                     await self.send_daily_notification(user_id, success=True, total=current_fapcoins)

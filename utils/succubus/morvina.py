@@ -85,6 +85,7 @@ class MorvinaHandler(SuccubusHandler):
                         continue
                     
                     # Send the loot box message
+                    await channel.send(f"<@{user_id}>")
                     embed = discord.Embed(
                         title="✨ Loot Box Appeared! ✨",
                         description=f"<@{user_id}>, clique no 🎁 para reivindicar em 5 segundos!",

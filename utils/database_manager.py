@@ -43,6 +43,8 @@ class DatabaseManager:
                 user_id TEXT,
                 succubus_id TEXT,
                 acquired_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                xp INTEGER DEFAULT 0,
+                level INTEGER DEFAULT 1,
                 FOREIGN KEY (user_id) REFERENCES users(user_id),
                 UNIQUE(user_id, succubus_id)
             );
@@ -191,7 +193,7 @@ class DatabaseManager:
     def get_user_succubus(self, user_id: str) -> List[Dict[str, Any]]:
         conn, cur = self.get_connection()
         cur.execute("""
-            SELECT succubus_id, acquired_date
+            SELECT succubus_id, acquired_date, xp, level
             FROM user_succubus
             WHERE user_id = ?
         """, (user_id,))
@@ -294,3 +296,59 @@ class DatabaseManager:
         activation_time = datetime.fromisoformat(result['last_succubus_activation'])
             
         return activation_time
+
+    def update_succubus_xp(self, user_id: str, succubus_id: str, new_xp: int):
+        """
+        Update the XP of a user's succubus.
+        
+        Args:
+            user_id (str): The Discord user ID.
+            succubus_id (str): The ID of the succubus.
+            new_xp (int): The new XP value.
+        """
+        conn, cur = self.get_connection()
+        cur.execute("""
+            UPDATE user_succubus
+            SET xp = ?
+            WHERE user_id = ? AND succubus_id = ?
+        """, (new_xp, user_id, succubus_id))
+        conn.commit()
+        conn.close()
+
+    def update_succubus_level(self, user_id: str, succubus_id: str, new_level: int, new_xp: int):
+        """
+        Update the level and XP of a user's succubus.
+        
+        Args:
+            user_id (str): The Discord user ID.
+            succubus_id (str): The ID of the succubus.
+            new_level (int): The new level value.
+            new_xp (int): The remaining XP after leveling up.
+        """
+        conn, cur = self.get_connection()
+        cur.execute("""
+            UPDATE user_succubus
+            SET level = ?, xp = ?
+            WHERE user_id = ? AND succubus_id = ?
+        """, (new_level, new_xp, user_id, succubus_id))
+        conn.commit()
+        conn.close()
+
+    def add_user_succubus(self, user_id: str, succubus_id: str, xp: int = 0, level: int = 1):
+        """
+        Add a new succubus to a user's collection with initial XP and level.
+        
+        Args:
+            user_id (str): The Discord user ID.
+            succubus_id (str): The ID of the succubus.
+            xp (int): Initial XP (default: 0).
+            level (int): Initial level (default: 1).
+        """
+        conn, cur = self.get_connection()
+        cur.execute("""
+            INSERT INTO user_succubus (user_id, succubus_id, xp, level)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(user_id, succubus_id) DO NOTHING
+        """, (user_id, succubus_id, xp, level))
+        conn.commit()
+        conn.close()

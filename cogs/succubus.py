@@ -104,10 +104,14 @@ class Succubus(commands.Cog):
         for user_succ in user_succubus:
             succubus = self.get_succubus_by_id(user_succ['succubus_id'])
             if succubus:
+                level = user_succ.get('level', 1)
+                xp = user_succ.get('xp', 0)
+                xp_needed = self.calculate_xp_needed(level)
                 embed.add_field(
-                    name=f"{succubus['name']} ({succubus['rarity'].capitalize()})",
-                    value=f"✨ Ability: {succubus['ability_description']}\n"
-                          f"💀 Burden: {succubus['burden_description']}",
+                    name=f"{succubus['name']} ({succubus['rarity'].capitalize()}) - Level {level}",
+                    value=f"XP: {xp}/{xp_needed}\n"
+                        f"✨ Ability: {succubus['ability_description']}\n"
+                        f"💀 Burden: {succubus['burden_description']}",
                     inline=False
                 )
                 if succubus['image']:
@@ -141,7 +145,6 @@ class Succubus(commands.Cog):
     @commands.command()
     async def ritual(self, ctx):
         """Perform a ritual to summon a succubus"""
-        prefix = self.bot.command_prefix
         file_manager = self.bot.get_cog('FileManager')
         user = ctx.author.name
         user_id = str(ctx.author.id)
@@ -149,7 +152,7 @@ class Succubus(commands.Cog):
         # Check if user has a Ritual item
         user_items = file_manager.db.get_user_items(user_id)
         if not user_items.get("Ritual", 0) > 0:
-            await ctx.send(f"{user}, you don't have any Ritual items! Buy one from the store using `{prefix}store`")
+            await ctx.send(f"{user}, you don't have any Ritual items! Buy one from the store using `{self.bot.command_prefix}store`")
             return
 
         # Use the Ritual item
@@ -177,61 +180,61 @@ class Succubus(commands.Cog):
         
         # Check if user already has this succubus
         user_succubus = file_manager.db.get_user_succubus(user_id)
-        has_succubus = any(s['succubus_id'] == chosen_succubus['id'] for s in user_succubus)
+        existing_succubus = next((s for s in user_succubus if s['succubus_id'] == chosen_succubus['id']), None)
 
-        await ctx.send("<:roulette:1352049721413206016> Gachando...")
-        time.sleep(3)
+        await ctx.send("<:roulette:1352049721413206016> Rolling...")
+        await asyncio.sleep(3)  # Use asyncio.sleep instead of time.sleep for async compatibility
         
-        if has_succubus:
-            # Compensation for duplicate
-            compensation_coins = {
-                "common": 20,
-                "rare": 40,
-                "epic": 80,
-                "legendary": 150
-            }
-            coin_amount = compensation_coins.get(rarity, 20)
-            file_manager.db.update_fapcoins(user_id, coin_amount)
+        if existing_succubus:
+            # Add XP to the existing succubus
+            current_xp = existing_succubus.get('xp', 0)
+            current_level = existing_succubus.get('level', 1)
+            new_xp = current_xp + 1
+            xp_needed = self.calculate_xp_needed(current_level)
             
-            embed = discord.Embed(
-                title="Duplicate Succubus!",
-                description=f"You already have {chosen_succubus['name']}! You received {coin_amount} Fapcoins as compensation.",
-                color=discord.Color.gold()
-            )
+            if new_xp >= xp_needed:
+                # Level up the succubus
+                new_level = current_level + 1
+                new_xp = new_xp - xp_needed  # Reset XP after leveling up
+                file_manager.db.update_succubus_level(user_id, chosen_succubus['id'], new_level, new_xp)
+                await ctx.send(f"Your {chosen_succubus['name']} leveled up to level {new_level}!")
+            else:
+                # Just update XP
+                file_manager.db.update_succubus_xp(user_id, chosen_succubus['id'], new_xp)
+                await ctx.send(f"Your {chosen_succubus['name']} gained 1 XP! Current XP: {new_xp}/{xp_needed}")
         else:
-            # Add succubus to user's collection
-            file_manager.db.add_user_succubus(user_id, chosen_succubus['id'])
+            # Add new succubus with XP=0 and LVL=1
+            file_manager.db.add_user_succubus(user_id, chosen_succubus['id'], xp=0, level=1)
+            await ctx.send(f"You obtained a new succubus: {chosen_succubus['name']} (Level 1)!")
 
-            embed = discord.Embed(
-                title="✨ New Succubus Summoned! ✨",
-                description=f"You summoned {chosen_succubus['name']} ({rarity.capitalize()})!",
-                color=discord.Color.purple()
-            )
-
+        # Display succubus info
+        embed = discord.Embed(
+            title="Succubus Info",
+            description=f"{chosen_succubus['name']} ({rarity.capitalize()})",
+            color=discord.Color.purple()
+        )
         embed.add_field(name="✨ Ability", value=chosen_succubus['ability_description'], inline=False)
         embed.add_field(name="💀 Burden", value=chosen_succubus['burden_description'], inline=False)
-        
         if chosen_succubus['image']:
             embed.set_image(url=chosen_succubus['image'])
-
         await ctx.send(embed=embed)
 
-    @commands.command(aliases=["ls"])
-    async def listsuccubus(self, ctx):
-        """List all available succubus"""
-        succubus_list = self.get_all_succubus().values()
-        
-        embed = discord.Embed(title="Available Succubus", color=discord.Color.purple())
-        
-        for succubus in succubus_list:
-            embed.add_field(
-                name=f"{succubus['name']} ({succubus['rarity'].capitalize()})",
-                value=f"✨ Ability: {succubus['ability_description']}\n"
-                      f"💀 Burden: {succubus['burden_description']}",
-                inline=False
-            )
+        @commands.command(aliases=["ls"])
+        async def listsuccubus(self, ctx):
+            """List all available succubus"""
+            succubus_list = self.get_all_succubus().values()
+            
+            embed = discord.Embed(title="Available Succubus", color=discord.Color.purple())
+            
+            for succubus in succubus_list:
+                embed.add_field(
+                    name=f"{succubus['name']} ({succubus['rarity'].capitalize()})",
+                    value=f"✨ Ability: {succubus['ability_description']}\n"
+                        f"💀 Burden: {succubus['burden_description']}",
+                    inline=False
+                )
 
-        await ctx.send(embed=embed)
+            await ctx.send(embed=embed)
 
     @commands.command(aliases=["ativar"])
     @commands.cooldown(1, 604800, commands.BucketType.user)  # 1-week cooldown
@@ -401,6 +404,19 @@ class Succubus(commands.Cog):
             await ctx.send(f"You need to wait {days} days and {hours} hours to activate another succubus!")
         else:
             await ctx.send(f"Error: {error}")
+
+    @staticmethod
+    def calculate_xp_needed(current_level):
+        """
+        Calculate the XP needed to reach the next level.
+        
+        Args:
+            current_level (int): The current level of the succubus.
+        
+        Returns:
+            int: The XP required to reach the next level.
+        """
+        return 5 * current_level
 
 async def setup(bot):
     await bot.add_cog(Succubus(bot))
